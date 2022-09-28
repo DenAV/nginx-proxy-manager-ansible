@@ -1,0 +1,46 @@
+---
+# tasks file for npm-managenment
+- name: "Include OS-specific variables"
+  include_vars:
+    dir: vars
+  no_log: True
+
+# --- API Heath-Check-Endpunkt
+- name: NPM | API Heath-Check-Endpunkt
+  uri:
+    url: "{{npm_api_check_url}}"
+    timeout: 1
+    return_content: yes
+  register: npm_api_check_result
+  changed_when: no
+  check_mode: no
+  failed_when: no
+  delegate_to: localhost
+  no_log: True
+
+# --- Get Access Token ---
+- name: NPM Post | Get Access Token
+  uri:
+    url: '{{npm_api_url}}/tokens'
+    method: POST
+    validate_certs: no
+    status_code: 200
+    body_format: json
+    body:
+      identity: "{{npm_user}}"
+      secret: "{{npm_password}}"
+    headers:
+      Content-Type: application/json
+  register: npm_access_token
+  delegate_to: localhost
+  no_log: True
+  when:
+    - npm_api_check_result.status == 200
+
+- name: Create Host
+  npm_proxy:
+    url: "{{npm_api_url}}"
+    token: "{{npm_access_token.json.token}}"
+    domain: "{{npm_api_domain_name}}"
+    host: "{{npm_api_host}}"
+
