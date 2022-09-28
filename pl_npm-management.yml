@@ -1,4 +1,4 @@
-## Cloudboard fordert neue Cloud-Liste an
+## Add a new proxy host
 - name: NPM-Management
   hosts: localhost
   gather_facts: no
@@ -8,5 +8,5 @@
 
   roles:
     - role: npm-management
-      npm_api_domain_name: "site-2.denav.net"
+      npm_api_domain_name: "site-2.example.com"
       npm_api_host: "172.16.1.2"
