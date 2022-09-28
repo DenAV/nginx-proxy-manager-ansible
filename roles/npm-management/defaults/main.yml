@@ -1,0 +1,10 @@
+---
+# defaults file for npm-management
+npm_api_get_ssl: False
+npm_api_get_host: False
+
+npm_api_create_ssl: False
+npm_api_create_host: False
+
+npm_api_domain_name: ""
+npm_api_host: ""

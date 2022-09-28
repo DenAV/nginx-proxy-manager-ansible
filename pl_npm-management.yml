@@ -1,0 +1,12 @@
+## Cloudboard fordert neue Cloud-Liste an
+- name: NPM-Management
+  hosts: localhost
+  gather_facts: no
+
+#  vars_files:
+#    - "./pl_vars/role_variable.yml"
+
+  roles:
+    - role: npm-management
+      npm_api_domain_name: "site-2.denav.net"
+      npm_api_host: "172.16.1.2"
