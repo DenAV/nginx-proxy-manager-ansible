@@ -3,10 +3,8 @@
   hosts: localhost
   gather_facts: no
 
-#  vars_files:
-#    - "./pl_vars/role_variable.yml"
-
   roles:
     - role: npm-management
       npm_api_domain_name: "site-2.example.com"
       npm_api_host: "172.16.1.2"
+      npm_api_ssl_forced: True
