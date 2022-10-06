@@ -1,0 +1,23 @@
+#Version 2.9.18 
+# LE_MAIL variable for letsencrypt_email
+version: '3'
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:2.9.18'
+    container_name: npm-app
+    hostname: npm
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+      - ${PWD}/internal/certificate.js:/app/internal/certificate.js
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/bin/check-health"]
+      interval: 10s
+      timeout: 3s
+    environment:
+      LE_MAIL: "npm-admin@example.com"
