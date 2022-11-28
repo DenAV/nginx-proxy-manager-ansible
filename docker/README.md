@@ -11,7 +11,7 @@
 version: '3'
 services:
   app:
-    image: 'jc21/nginx-proxy-manager:latest'
+    image: 'jc21/nginx-proxy-manager:2.9.18'
     restart: unless-stopped
     ports:
       - '80:80'
