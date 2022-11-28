@@ -1,17 +1,17 @@
-## Ansible role for [Nginx Proxy Manager](https://github.com/NginxProxyManager/nginx-proxy-manager).
+## Ansible role for [Nginx Proxy Manager v2.9.18](https://github.com/NginxProxyManager/nginx-proxy-manager/tree/v2.9.18).
 a simple way to add a new proxy host via ansible playbook.
-
+Checked for version v2.9.18.
 
 Description
 -----------
 module: nginx-proxy-manager-ansible
-version: "1.0.0"
 description: a simple way to add a new proxy host or to delete via ansible playbook
 
 Requirements
 ------------
 
 This role requires Ansible 2.7 or higher, Docker and Docker-Compose.
+
 Change and update a [docker-compose.yml](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/docker/docker-compose_npm.yml) file. Bring up your stack by running docker-compose, further info [here](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/docker).
 
 Role Variables
