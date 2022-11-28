@@ -1,5 +1,5 @@
 ## Add a new proxy host
-- name: NPM-Management
+- name: NPM - create proxy host
   hosts: localhost
   gather_facts: no
 
