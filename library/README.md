@@ -18,6 +18,7 @@ A simple way to add a new proxy host or to delete via ansible playbook.
 
 
 ## Examples
+```yaml
 name: Create Proxy-Host an NPM
 npm_proxy:
   url: "http://192.168.0.1:81/api"
@@ -34,7 +35,7 @@ npm_proxy:
   domain: "domain_name.example.com"
   host: "172.32.0.1"
   state: absent
-
+```
 
 The given code is an Ansible module called nginx-proxy-manager-ansible. The module allows adding, removing or deleting a new proxy host through an Ansible playbook. The module takes in parameters such as the url of the Nginx Proxy Manager REST API, tokens to authenticate, domain names, forward hostname / IP, forward port, SSL forcing, and state (present or absent). 
 
