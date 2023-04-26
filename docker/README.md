@@ -5,7 +5,7 @@
 - [Docker Install documentation](https://docs.docker.com/install/)
 - [Docker-Compose Install documentation](https://docs.docker.com/compose/install/)
 
-2. change and update to register with the specified e-mail address in docker-compose.yml file similar to this:
+2. change and update to register with the specified e-mail address in docker-compose_npm.yml file similar to this:
 
 ```yml
 version: '3'

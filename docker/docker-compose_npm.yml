@@ -1,9 +1,9 @@
-#Version 2.9.18 
+#Version 2.9.19 
 # LE_MAIL variable for letsencrypt_email
 version: '3'
 services:
   app:
-    image: 'jc21/nginx-proxy-manager:2.9.18'
+    image: 'jc21/nginx-proxy-manager:2.9.19'
     container_name: npm-app
     hostname: npm
     ports:
