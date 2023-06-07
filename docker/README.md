@@ -8,10 +8,10 @@
 2. change and update to register with the specified e-mail address in docker-compose_npm.yml file similar to this:
 
 ```yml
-version: '3'
+version: '3.8'
 services:
   app:
-    image: 'jc21/nginx-proxy-manager:2.9.19'
+    image: 'jc21/nginx-proxy-manager:2.10.3'
     restart: unless-stopped
     ports:
       - '80:80'
