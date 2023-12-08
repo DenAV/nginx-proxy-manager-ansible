@@ -45,8 +45,6 @@
     host: "{{npm_api_host}}"
     state: present
     ssl_forced: "{{npm_api_ssl_forced}}"
-    delegate_to: localhost
-    throttle: 1
   when:
     - npm_access_token
     - npm_api_domain_name is defined
