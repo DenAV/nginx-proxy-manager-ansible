@@ -8,3 +8,4 @@
       npm_api_domain_name: "site-2.example.com"
       npm_api_host: "172.16.1.2"
       npm_api_ssl_forced: True
+      npm_api_create_host: True
