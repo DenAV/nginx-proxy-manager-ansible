@@ -1,7 +1,8 @@
 ## NPM-MANAGEMENT
-Ansible role for [Nginx Proxy Manager v2.9.18](https://github.com/NginxProxyManager/nginx-proxy-manager/tree/v2.9.18).
+## Ansible role for [Nginx Proxy Manager v2.10.3](https://github.com/NginxProxyManager/nginx-proxy-manager/tree/v2.10.3).
 a simple way to add a new proxy host via ansible playbook.
-Checked for version v2.9.18.
+Checked for version v2.10.3.
+
 =========
 
 description
