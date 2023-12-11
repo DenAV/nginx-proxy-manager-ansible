@@ -35,10 +35,12 @@ options:
     host_port:
         description: Forward Port 
         required: false
+        default: 80
         type: int
     ssl_forced:
         description: Is SSL Forced?
         required: false
+        default: true
         type: bool
     state:
         description: Whether to create (present), or remove (absent) a proxy host.
