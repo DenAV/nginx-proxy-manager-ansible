@@ -86,6 +86,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
+# Build URL for HTTP request
 def build_url(api_url, action, item_id=None):
     if action == "create-host":
         return "%s/nginx/proxy-hosts" % api_url, "POST"
@@ -100,6 +101,7 @@ def build_url(api_url, action, item_id=None):
     elif action == "delete-ssl":
         return  "%s/nginx/certificates/%s" % (api_url, item_id), "DELETE"
 
+# Execution of the HTTP request
 def http_request(api_url, token, action, data=None, item_id=None):
     
     if item_id is None:
@@ -120,6 +122,7 @@ def http_request(api_url, token, action, data=None, item_id=None):
 
     return response, response.status_code
 
+#  Search Proxy-host, exists or not
 def search_proxy_host(module, api_url, token, domain_name):
     response, info = http_request(api_url, token, action="search-host")
     
@@ -135,8 +138,8 @@ def search_proxy_host(module, api_url, token, domain_name):
     # Return proxy_host
     return result_search
 
+# Create new Proxy-host
 def create_proxy_host(module, api_url, token, domain_name, forward_host, forward_port, ssl_forced):
-    # Create Proxy-host
     
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
@@ -174,8 +177,8 @@ def create_proxy_host(module, api_url, token, domain_name, forward_host, forward
         elif status_code >= 400:
             return 2, "Failed to connect to api host to create for proxy_host. Info: %s" % response
 
+# Delete Proxy-host
 def delete_proxy_host(module, api_url, token, domain_name):
-    # Delete Proxy-host
    
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
@@ -208,6 +211,7 @@ def delete_proxy_host(module, api_url, token, domain_name):
     else:
         return 0, "Proxy-host " + domain_name + " already deleted."
 
+# Search Certificate, exists or not
 def search_certificate(module, api_url, token, domain_name=None, item_id=None):
     response, info = http_request(api_url, token, action="search-ssl")
     
@@ -229,6 +233,7 @@ def search_certificate(module, api_url, token, domain_name=None, item_id=None):
     # Return certificate
     return result_search
 
+# Delete Certificate
 def delete_certificate(module, api_url, token, item_id):
     
     certificate = search_certificate(module, api_url, token, item_id=item_id)
@@ -250,6 +255,7 @@ def delete_certificate(module, api_url, token, item_id):
         result = "Certificate id: %s does not exist." % item_id
         return 0, result
 
+# Main function
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -285,3 +291,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# TODO 
+# 1. Add some unit tests to validate the URLs and methods are constructed as expected for different action/parameter combinations. 
+#    This helps prevent regressions if the code is refactored later.
