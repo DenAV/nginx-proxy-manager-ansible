@@ -1,4 +1,8 @@
 ## Created by .ignore support plugin (hsz.mobi)
+
+# ToDo files
+_ToDo/
+
 # Ansible
 hosts*
 !hosts.save
@@ -9,6 +13,9 @@ pl_vars/role_new-vm_win.*
 *.log
 pl_test*
 test*
+
+# Secrets (Vault)
+**/api_secret.yml
 
 # User-Probe
 Probe/ **probe.py

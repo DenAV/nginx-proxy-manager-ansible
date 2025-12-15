@@ -5,6 +5,20 @@
     dir: vars
   no_log: True
 
+# --- Validate required secrets early
+- name: Validate NPM API credentials
+  assert:
+    that:
+      - npm_user is defined
+      - npm_user | length > 0
+      - npm_password is defined
+      - npm_password | length > 0
+    fail_msg: >-
+      NPM API credentials (npm_user/npm_password) are missing or empty.
+      Set them in roles/npm-management/vars/api_secret.yml and encrypt with Ansible Vault.
+    success_msg: NPM API credentials present.
+  no_log: True
+
 # --- API Heath-Check-Endpunkt
 - name: NPM | API Heath-Check-Endpunkt
   uri:

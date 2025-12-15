@@ -1,0 +1,2 @@
+ansible-lint>=6.20.0
+flake8>=7.0.0

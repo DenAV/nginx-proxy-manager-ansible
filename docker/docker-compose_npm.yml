@@ -4,7 +4,7 @@
 version: '3.8'
 services:
   app:
-    image: 'jc21/nginx-proxy-manager:2.10.3'
+    image: 'jc21/nginx-proxy-manager:${IMAGE_TAG:-2.10.3}'
     container_name: npm-app
     hostname: npm
     ports:
@@ -21,4 +21,4 @@ services:
       interval: 10s
       timeout: 3s
     environment:
-      LE_MAIL: "npm-admin@example.com"
+      LE_MAIL: "${LE_MAIL:-npm-admin@example.com}"
