@@ -1,17 +1,33 @@
 ## Quick Setup
 
-1. Install Docker and Docker-Compose
+1. Install Docker and Docker Compose
 
 - [Docker Install documentation](https://docs.docker.com/install/)
-- [Docker-Compose Install documentation](https://docs.docker.com/compose/install/)
+- [Docker Compose documentation](https://docs.docker.com/compose/)
 
-2. change and update to register with the specified e-mail address in docker-compose_npm.yml file similar to this:
+2. Create an `.env` file to parameterize image tag and email.
+
+- Copy the example and edit values:
+
+```bash
+cd docker
+copy .env.example .env  # or: cp .env.example .env
+```
+
+- `.env` contents (example):
+
+```
+IMAGE_TAG=2.10.3
+LE_MAIL=npm-admin@example.com
+```
+
+- `docker-compose_npm.yml` uses these variables:
 
 ```yml
 version: '3.8'
 services:
   app:
-    image: 'jc21/nginx-proxy-manager:2.10.3'
+    image: 'jc21/nginx-proxy-manager:${IMAGE_TAG:-2.10.3}'
     restart: unless-stopped
     ports:
       - '80:80'
@@ -22,14 +38,17 @@ services:
       - ./letsencrypt:/etc/letsencrypt
       - ${PWD}/internal/certificate.js:/app/internal/certificate.js
     environment:
-      LE_MAIL: "npm-admin@example.com"
+      LE_MAIL: "${LE_MAIL:-npm-admin@example.com}"
 ```
 
-3. Bring up your stack by running
+3. Bring up your stack by running (from the `docker` directory)
 
 ```bash
-docker-compose -f docker-compose_npm.yml up -d
+# Docker Compose V2
+docker compose -f docker-compose_npm.yml up -d
 
+# or legacy Docker-Compose
+docker-compose -f docker-compose_npm.yml up -d
 ```
 
 4. Log in to the Admin UI
