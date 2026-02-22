@@ -1,0 +1,41 @@
+---
+driver:
+  name: docker
+
+platforms:
+  - name: npm-test
+    image: jc21/nginx-proxy-manager:2.10.3
+    published_ports:
+      - "0.0.0.0:3080:80"
+      - "0.0.0.0:3081:81"
+      - "0.0.0.0:3443:443"
+    pre_build_image: true
+    override_command: false
+    privileged: true
+    volumes:
+      - /tmp/npm-data:/data
+      - /tmp/npm-letsencrypt:/etc/letsencrypt
+
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: ../../roles
+    ANSIBLE_LIBRARY: ../../library
+  inventory:
+    host_vars:
+      localhost:
+        npm_api_url: "http://127.0.0.1:3081/api"
+        npm_user: "admin@example.com"
+        npm_password: "changeme"
+
+verifier:
+  name: ansible
+
+scenario:
+  name: default
+  test_sequence:
+    - destroy
+    - create
+    - converge
+    - verify
+    - destroy

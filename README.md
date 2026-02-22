@@ -45,3 +45,50 @@ Example Playbook
       npm_api_create_host: True
 
 ```
+
+Linting
+-------
+
+- Install dev tools:
+
+```bash
+pip install -r requirements-dev.txt
+# or on Windows
+py -m pip install -r requirements-dev.txt
+```
+
+- Run Ansible lint:
+
+```bash
+ansible-lint .
+```
+
+- Run Python lint for the custom module:
+
+```bash
+flake8 library/npm_proxy.py
+```
+
+Secrets Management (Vault)
+--------------------------
+
+- Store API credentials in an encrypted vault file at `roles/npm-management/vars/api_secret.yml`.
+- Create and edit the vault file:
+
+```bash
+ansible-vault create roles/npm-management/vars/api_secret.yml
+# add:
+# ---
+# npm_user: npm-manager@example.com
+# npm_password: changeme
+```
+
+- Run playbooks with your vault password:
+
+```bash
+ansible-playbook pl_npm-management.yml --ask-vault-pass
+# or
+ansible-playbook pl_npm-management.yml --vault-password-file .vault-pass
+```
+
+- An example (unencrypted) template is provided at `roles/npm-management/vars/api_secret.yml.example`.
