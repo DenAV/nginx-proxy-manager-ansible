@@ -13,6 +13,7 @@ import sys
 import os
 import types
 import pytest
+import requests
 from unittest.mock import patch, MagicMock
 
 # ---------------------------------------------------------------------------
@@ -77,10 +78,10 @@ class TestBuildUrl:
         assert url == "http://localhost:81/api/nginx/certificates/7"
         assert method == "DELETE"
 
-    def test_unknown_action_returns_none(self):
-        """Unknown action should return None (current behavior — future: raise)."""
-        result = npm_proxy.build_url("http://localhost:81/api", "unknown-action")
-        assert result is None
+    def test_unknown_action_raises_value_error(self):
+        """Unknown action should raise ValueError."""
+        with pytest.raises(ValueError, match="Unknown action"):
+            npm_proxy.build_url("http://localhost:81/api", "unknown-action")
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +142,41 @@ class TestHttpRequest:
         assert headers["Authorization"] == "Bearer my-secret-token"
         assert headers["Content-Type"] == "application/json"
 
+    @patch("npm_proxy.requests.get")
+    def test_timeout_is_set(self, mock_get):
+        """Verify timeout=10 is passed to requests calls."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        npm_proxy.http_request(
+            "http://localhost:81/api", "token", action="search-host"
+        )
+        call_kwargs = mock_get.call_args
+        timeout = call_kwargs.kwargs.get("timeout") or call_kwargs[1].get("timeout")
+        assert timeout == 10
+
+    @patch("npm_proxy.requests.get")
+    def test_connection_error_is_raised(self, mock_get):
+        """ConnectionError from requests should propagate."""
+        mock_get.side_effect = requests.exceptions.ConnectionError("refused")
+
+        with pytest.raises(requests.exceptions.ConnectionError, match="Failed to connect"):
+            npm_proxy.http_request(
+                "http://localhost:81/api", "token", action="search-host"
+            )
+
+    @patch("npm_proxy.requests.post")
+    def test_timeout_error_is_raised(self, mock_post):
+        """Timeout from requests should propagate."""
+        mock_post.side_effect = requests.exceptions.Timeout("timed out")
+
+        with pytest.raises(requests.exceptions.Timeout, match="timed out"):
+            npm_proxy.http_request(
+                "http://localhost:81/api", "token",
+                action="create-host", data='{"test": true}'
+            )
+
 
 # ---------------------------------------------------------------------------
 # search_proxy_host tests
@@ -175,8 +211,7 @@ class TestSearchProxyHost:
         result = npm_proxy.search_proxy_host(
             module, "http://localhost:81/api", "token", "nonexistent.example.com"
         )
-        # Current behavior returns empty string; after P0 fix should be None or {}
-        assert result == "" or result is None or result == {}
+        assert result is None
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +223,7 @@ class TestCreateProxyHost:
     @patch("npm_proxy.http_request")
     @patch("npm_proxy.search_proxy_host")
     def test_create_new_host(self, mock_search, mock_http):
-        mock_search.return_value = ""  # not found
+        mock_search.return_value = None  # not found
 
         mock_response = MagicMock()
         mock_response.status_code = 201
@@ -217,7 +252,7 @@ class TestCreateProxyHost:
     @patch("npm_proxy.http_request")
     @patch("npm_proxy.search_proxy_host")
     def test_create_with_ssl(self, mock_search, mock_http):
-        mock_search.return_value = ""  # not found
+        mock_search.return_value = None  # not found
 
         mock_response = MagicMock()
         mock_response.status_code = 201
@@ -239,7 +274,7 @@ class TestCreateProxyHost:
     @patch("npm_proxy.http_request")
     @patch("npm_proxy.search_proxy_host")
     def test_create_api_error(self, mock_search, mock_http):
-        mock_search.return_value = ""  # not found
+        mock_search.return_value = None  # not found
 
         mock_response = MagicMock()
         mock_response.status_code = 500
@@ -276,7 +311,7 @@ class TestDeleteProxyHost:
 
     @patch("npm_proxy.search_proxy_host")
     def test_delete_nonexistent(self, mock_search):
-        mock_search.return_value = ""  # not found
+        mock_search.return_value = None  # not found
 
         module = MagicMock()
         rc, msg = npm_proxy.delete_proxy_host(

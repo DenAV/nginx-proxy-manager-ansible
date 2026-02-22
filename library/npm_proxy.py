@@ -102,6 +102,8 @@ def build_url(api_url, action, item_id=None):
         return "%s/nginx/certificates" % api_url, "GET"
     elif action == "delete-ssl":
         return "%s/nginx/certificates/%s" % (api_url, item_id), "DELETE"
+    else:
+        raise ValueError("Unknown action: %s" % action)
 
 
 # Execution of the HTTP request
@@ -116,12 +118,21 @@ def http_request(api_url, token, action, data=None, item_id=None):
     headers["Authorization"] = "Bearer %s" % token
     headers["Content-Type"] = "application/json"
 
-    if method == "GET":
-        response = requests.get(url=url, data=data, headers=headers)
-    elif method == "POST":
-        response = requests.post(url=url, data=data, headers=headers)
-    elif method == "DELETE":
-        response = requests.delete(url=url, data=data, headers=headers)
+    try:
+        if method == "GET":
+            response = requests.get(url=url, data=data, headers=headers, timeout=10)
+        elif method == "POST":
+            response = requests.post(url=url, data=data, headers=headers, timeout=10)
+        elif method == "DELETE":
+            response = requests.delete(url=url, data=data, headers=headers, timeout=10)
+    except requests.exceptions.ConnectionError as e:
+        raise requests.exceptions.ConnectionError(
+            "Failed to connect to %s: %s" % (url, e)
+        )
+    except requests.exceptions.Timeout as e:
+        raise requests.exceptions.Timeout(
+            "Request to %s timed out: %s" % (url, e)
+        )
 
     return response, response.status_code
 
@@ -134,7 +145,7 @@ def search_proxy_host(module, api_url, token, domain_name):
     if status_code >= 400:
         module.fail_json(msg="Failed to connect to api host to search for proxy_host. Info: %s" % response)
 
-    result_search = ""
+    result_search = None
     for search in json.loads(response.text):
         if domain_name in search["domain_names"]:
             result_search = search
@@ -148,7 +159,7 @@ def create_proxy_host(module, api_url, token, domain_name, forward_host, forward
 
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
-    if len(proxy_host) > 0:
+    if proxy_host:
         # If the Proxy-host already exists, do nothing
         return 0, "Proxy Host %s already exists" % domain_name
 
@@ -188,7 +199,7 @@ def delete_proxy_host(module, api_url, token, domain_name):
 
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
-    if len(proxy_host) > 0:
+    if proxy_host:
         # If the Proxy-host already exists, do remove
         if proxy_host['certificate_id'] > 0:
             # IF the Proxy-host have certificate
@@ -198,7 +209,7 @@ def delete_proxy_host(module, api_url, token, domain_name):
                 response, status_code = http_request(api_url, token, item_id=proxy_host['id'], action="delete-host")
 
                 if status_code == 200:
-                    return 1, "Proxy-host and certificate: %s remowed." % domain_name
+                    return 1, "Proxy-host and certificate: %s removed." % domain_name
 
                 elif status_code >= 400:
                     return 2, "Failed to delete for Proxy-host and certificate: %s. Info: %s" % (domain_name, response)
@@ -209,13 +220,13 @@ def delete_proxy_host(module, api_url, token, domain_name):
             response, status_code = http_request(api_url, token, item_id=proxy_host['id'], action="delete-host")
 
             if status_code == 200:
-                return 1, "Proxy-host: %s remowed." % domain_name
+                return 1, "Proxy-host: %s removed." % domain_name
 
             elif status_code >= 400:
                 return 2, "Failed to delete for Proxy-host: %s. Info: %s" % (domain_name, response)
 
     else:
-        return 0, "Proxy-host " + domain_name + " already deleted."
+        return 0, "Proxy-host %s already deleted." % domain_name
 
 
 # Search Certificate, exists or not
@@ -226,7 +237,7 @@ def search_certificate(module, api_url, token, domain_name=None, item_id=None):
     if status_code >= 400:
         module.fail_json(msg="Failed to search for certificate. Info: %s" % response)
 
-    result_search = ""
+    result_search = None
     if domain_name is not None:
         for search in json.loads(response.text):
             if domain_name in search["domain_names"]:
@@ -246,13 +257,13 @@ def delete_certificate(module, api_url, token, item_id):
 
     certificate = search_certificate(module, api_url, token, item_id=item_id)
 
-    if len(certificate) > 0:
+    if certificate:
         # If the certificate already exists, do remove
         response, info = http_request(api_url, token, item_id=item_id, action="delete-ssl")
 
         status_code = info
         if status_code == 200:
-            result = "Certificate id: %s remowed" % item_id
+            result = "Certificate id: %s removed" % item_id
             return 1, result
 
         elif status_code >= 400:
