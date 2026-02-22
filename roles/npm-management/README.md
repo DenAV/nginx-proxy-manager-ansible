@@ -1,47 +1,44 @@
 ## NPM-MANAGEMENT
-## Ansible role for [Nginx Proxy Manager v2.10.3](https://github.com/NginxProxyManager/nginx-proxy-manager/tree/v2.10.3).
-a simple way to add a new proxy host via ansible playbook.
-Checked for version v2.10.3.
 
-=========
+Ansible role for [Nginx Proxy Manager v2.14.0](https://github.com/NginxProxyManager/nginx-proxy-manager/tree/v2.14.0).
 
-description
------------
+A simple way to add or delete proxy hosts via Ansible playbook.
 
-a simple way to add a new proxy host or to delete via ansible playbook
+## Description
 
-Requirements
-------------
+This role manages Nginx Proxy Manager proxy hosts through the REST API.
 
-This role requires Ansible 2.7 or higher, Docker and Docker-Compose.
+## Requirements
+
+- Ansible 2.7 or higher
+- Docker and Docker-Compose
+- Python `requests` module
 
 Change and update a [docker-compose.yml](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/docker/docker-compose_npm.yml) file. Bring up your stack by running docker-compose, further info [here](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/docker).
 
-Role Variables
---------------
+## Role Variables
 
-- `npm_api_url` - IP for the Nginx Proxy Manager REST API. Default to `http://192.168.1.5:81/api`.
-- `npm_user` - User to authenticate the Nginx Proxy Manager REST API.
-- `npm_password` - Password to authenticate the Nginx Proxy Manager REST API.
-- `npm_access_token` - Tokens are required to authenticate against the API.
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `npm_api_url` | URL for the NPM REST API | `http://192.168.1.5:81/api` |
+| `npm_user` | API authentication username | - |
+| `npm_password` | API authentication password | - |
+| `npm_access_token` | API authentication token | - |
+| `npm_api_domain_name` | Domain name for the proxy host | `""` |
+| `npm_api_host` | Forward hostname/IP | `""` |
+| `npm_api_host_port` | Forward port | `80` |
+| `npm_api_ssl_forced` | Force SSL | `False` |
+| `npm_api_create_host` | Create proxy host | `False` |
 
-- `npm_api_domain_name` - Domain Names are required to create the Proxy host.
-- `npm_api_host` - Forward Hostname / IP are required to create the Proxy host.
-- `npm_api_ssl_forced` - Is SSL Forced? Default is `False`.
-- `npm_api_create_host` - IWhether to create (present), or no a proxy host. Default is `False`.
+See [`defaults/main.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/roles/npm-management/defaults/main.yml) and [`vars/*.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/roles/npm-management/vars) for all options.
 
-See the [`defaults/main.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/roles/npm-management/defaults/main.yml) or [`vars/*.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/roles/npm-management/vars) file listing all possible options which you can be passed to a runner registration command.
+## Dependencies
 
+None.
 
-Dependencies
-------------
+## Example Playbook
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+### Create a Proxy Host
 
 ```yaml
 - name: NPM - create proxy host
@@ -56,14 +53,27 @@ Including an example of how to use your role (for instance, with variables passe
       npm_api_create_host: True
 ```
 
-License
--------
+### Delete a Proxy Host
+
+```yaml
+- name: NPM - delete proxy host
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Remove proxy host
+      npm_proxy:
+        url: "{{ npm_api_url }}"
+        token: "{{ npm_access_token }}"
+        domain: "site-2.example.com"
+        host: "172.16.1.2"
+        state: absent
+```
+
+## License
 
 BSD
 
-Author Information
-------------------
+## Author
 
 https://github.com/DenAV
-
-
