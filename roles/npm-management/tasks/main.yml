@@ -1,5 +1,5 @@
 ---
-# tasks file for npm-managenment
+# tasks file for npm-management
 - name: "Include OS-specific variables"
   include_vars:
     dir: vars

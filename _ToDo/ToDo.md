@@ -4,9 +4,16 @@
 
 ## Branching & testing strategy
 
+```
+feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
+                      ↑           ↑
+                  lint + unit   lint + unit + molecule
+```
+
 - **Branches:** `feature/*` or `fix/*` → `develop` → `main`
 - **On push/PR to `develop`:** lint (ansible-lint + flake8) + syntax-check + unit tests
 - **On PR to `main`:** lint + unit tests + Molecule integration tests (NPM in Docker)
+- **After merge to `main`:** create git tag (`vX.Y.Z`) + GitHub Release with changelog
 - All P0/P1 fixes go to `develop` first, then PR to `main` after passing CI
 
 ---
