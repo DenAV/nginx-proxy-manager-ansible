@@ -6,3 +6,6 @@ exclude =
     __pycache__,
     venv,
     .venv
+per-file-ignores =
+    # Ansible modules require DOCUMENTATION block before imports
+    library/*.py: E402
