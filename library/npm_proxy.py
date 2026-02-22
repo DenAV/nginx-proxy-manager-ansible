@@ -33,7 +33,7 @@ options:
         required: true
         type: str
     host_port:
-        description: Forward Port 
+        description: Forward Port
         required: false
         default: 80
         type: int
@@ -46,7 +46,9 @@ options:
         description: Whether to create (present), or remove (absent) a proxy host.
         required: false
         type: str
-        choices=['absent', 'present']
+        choices:
+          - absent
+          - present
 '''
 EXAMPLES = r'''
 # create new proxy host
@@ -84,7 +86,7 @@ import requests
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+
 
 # Build URL for HTTP request
 def build_url(api_url, action, item_id=None):
@@ -93,60 +95,63 @@ def build_url(api_url, action, item_id=None):
     elif action == "search-host":
         return "%s/nginx/proxy-hosts" % api_url, "GET"
     elif action == "delete-host":
-        return  "%s/nginx/proxy-hosts/%s" % (api_url, item_id), "DELETE"
+        return "%s/nginx/proxy-hosts/%s" % (api_url, item_id), "DELETE"
     elif action == "create-ssl":
         return "%s/nginx/certificates" % api_url, "POST"
     elif action == "search-ssl":
         return "%s/nginx/certificates" % api_url, "GET"
     elif action == "delete-ssl":
-        return  "%s/nginx/certificates/%s" % (api_url, item_id), "DELETE"
+        return "%s/nginx/certificates/%s" % (api_url, item_id), "DELETE"
+
 
 # Execution of the HTTP request
 def http_request(api_url, token, action, data=None, item_id=None):
-    
+
     if item_id is None:
         url, method = build_url(api_url, action)
     else:
         url, method = build_url(api_url, action, item_id)
-    
+
     headers = dict()
     headers["Authorization"] = "Bearer %s" % token
     headers["Content-Type"] = "application/json"
 
     if method == "GET":
-        response =  requests.get(url=url, data=data, headers=headers)
+        response = requests.get(url=url, data=data, headers=headers)
     elif method == "POST":
-        response =  requests.post(url=url, data=data, headers=headers)
+        response = requests.post(url=url, data=data, headers=headers)
     elif method == "DELETE":
-        response =  requests.delete(url=url, data=data, headers=headers)
+        response = requests.delete(url=url, data=data, headers=headers)
 
     return response, response.status_code
 
-#  Search Proxy-host, exists or not
+
+# Search Proxy-host, exists or not
 def search_proxy_host(module, api_url, token, domain_name):
     response, info = http_request(api_url, token, action="search-host")
-    
+
     status_code = info
     if status_code >= 400:
-        module.fail_json("Failed to connect to api host to search for proxy_host. Info: %s" % response)
+        module.fail_json(msg="Failed to connect to api host to search for proxy_host. Info: %s" % response)
 
     result_search = ""
     for search in json.loads(response.text):
         if domain_name in search["domain_names"]:
             result_search = search
-    
+
     # Return proxy_host
     return result_search
 
+
 # Create new Proxy-host
 def create_proxy_host(module, api_url, token, domain_name, forward_host, forward_port, ssl_forced):
-    
+
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
     if len(proxy_host) > 0:
         # If the Proxy-host already exists, do nothing
         return 0, "Proxy Host %s already exists" % domain_name
-        
+
     else:
         forward_scheme = "http"
 
@@ -177,9 +182,10 @@ def create_proxy_host(module, api_url, token, domain_name, forward_host, forward
         elif status_code >= 400:
             return 2, "Failed to connect to api host to create for proxy_host. Info: %s" % response
 
+
 # Delete Proxy-host
 def delete_proxy_host(module, api_url, token, domain_name):
-   
+
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
     if len(proxy_host) > 0:
@@ -187,7 +193,7 @@ def delete_proxy_host(module, api_url, token, domain_name):
         if proxy_host['certificate_id'] > 0:
             # IF the Proxy-host have certificate
             rc, result = delete_certificate(module, api_url, token, item_id=proxy_host['certificate_id'])
-            
+
             if rc == 0 or rc == 1:
                 response, status_code = http_request(api_url, token, item_id=proxy_host['id'], action="delete-host")
 
@@ -211,20 +217,21 @@ def delete_proxy_host(module, api_url, token, domain_name):
     else:
         return 0, "Proxy-host " + domain_name + " already deleted."
 
+
 # Search Certificate, exists or not
 def search_certificate(module, api_url, token, domain_name=None, item_id=None):
     response, info = http_request(api_url, token, action="search-ssl")
-    
+
     status_code = info
     if status_code >= 400:
-        module.fail_json("Failed to search for certificate. Info: %s" % response)
+        module.fail_json(msg="Failed to search for certificate. Info: %s" % response)
 
     result_search = ""
     if domain_name is not None:
         for search in json.loads(response.text):
             if domain_name in search["domain_names"]:
                 result_search = search
-        
+
     elif item_id is not None:
         for search in json.loads(response.text):
             if item_id == search["id"]:
@@ -233,15 +240,16 @@ def search_certificate(module, api_url, token, domain_name=None, item_id=None):
     # Return certificate
     return result_search
 
+
 # Delete Certificate
 def delete_certificate(module, api_url, token, item_id):
-    
+
     certificate = search_certificate(module, api_url, token, item_id=item_id)
 
     if len(certificate) > 0:
         # If the certificate already exists, do remove
         response, info = http_request(api_url, token, item_id=item_id, action="delete-ssl")
-        
+
         status_code = info
         if status_code == 200:
             result = "Certificate id: %s remowed" % item_id
@@ -254,6 +262,7 @@ def delete_certificate(module, api_url, token, item_id):
     else:
         result = "Certificate id: %s does not exist." % item_id
         return 0, result
+
 
 # Main function
 def main():
@@ -289,9 +298,6 @@ def main():
     else:
         module.exit_json(msg=result, changed=False)
 
+
 if __name__ == '__main__':
     main()
-
-# TODO 
-# 1. Add some unit tests to validate the URLs and methods are constructed as expected for different action/parameter combinations. 
-#    This helps prevent regressions if the code is refactored later.
