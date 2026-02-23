@@ -1,6 +1,6 @@
 # TODO — nginx-proxy-manager-ansible
 
-> Last updated: 2026-02-22
+> Last updated: 2026-02-23
 
 ## Branching & testing strategy
 
@@ -34,21 +34,24 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [x] `"npm-managenment"` → `"npm-management"` (tasks/main.yml, vars/main.yml)
   - [x] `"IWhether"` → `"Whether"` (README.md, roles/npm-management/README.md)
 
-- [ ] **Security: secrets**
-  - [ ] Remove `api_secret.yml` from git history (`git filter-repo`)
-  - [ ] Verify `.gitignore` pattern `**/api_secret.yml` works correctly
-  - [ ] Add `no_log: true` to task "Create Proxy-Host an NPM"
+- [x] **Security: secrets**
+  - [x] Remove `api_secret.yml` from git history (`git filter-repo`) — purged from 2 commits, force-pushed develop+main
+  - [x] Verify `.gitignore` pattern `**/api_secret.yml` works correctly — line 21
+  - [x] Add `no_log: true` to task "Create Proxy-Host an NPM" — PR #23
 
-- [ ] **Fill in `meta/main.yml`** with real data (author, license, min_ansible_version, platforms, galaxy_tags)
+- [x] **Fill in `meta/main.yml`** with real data (author, license, min_ansible_version, platforms, galaxy_tags) — PR #24
+
+- [x] **Add LICENSE file** (MIT) — PR #25
 
 ---
 
 ## P1 — Important (next sprint)
 
-- [ ] **CI/CD: GitHub Actions**
-  - [ ] Create workflow `.github/workflows/lint.yml` (ansible-lint + flake8)
-  - [ ] Add playbook syntax-check to CI
-  - [ ] Remove outdated `.travis.yml` (Python 2.7, `sudo: false`)
+- [x] **CI/CD: GitHub Actions** — PR #16
+  - [x] Create workflow `.github/workflows/ci.yml` (ansible-lint + flake8 + pytest)
+  - [x] Add playbook syntax-check to CI
+  - [x] Remove outdated `.travis.yml` (Python 2.7, `sudo: false`)
+  - [x] Add `.github/workflows/integration.yml` (Molecule on PR to main)
 
 - [ ] **Ansible Role: functionality**
   - [ ] Add task for `state: absent` (delete proxy host) in `tasks/main.yml`
@@ -68,6 +71,16 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [ ] Add logging configuration
   - [ ] Remove `certificate.js` override and `${PWD}/internal/` volume mount (see below)
   - [ ] Remove `LE_MAIL` environment variable from docker-compose
+
+- [ ] **Swagger UI service in docker-compose** — #21
+  - [ ] Add `swagger-ui` service to `docker/docker-compose_npm.yml`
+  - [ ] Verify Swagger UI loads the NPM schema successfully
+  - [ ] Update wiki API Reference page
+
+- [ ] **Deployment Guide wiki page (Hetzner Cloud + Azure ACI)** — #22
+  - [ ] Hetzner CX22 + Docker CE: full `hcloud` CLI commands, firewall, docker-compose
+  - [ ] Azure ACI: `az` CLI commands, storage mount, YAML deployment file
+  - [ ] Comparison table, Ansible inventory examples
 
 - [ ] **Add `letsencrypt_email` to `npm_proxy.py` (replaces certificate.js hack)**
   - [ ] Add `letsencrypt_email` parameter to module `argument_spec`
@@ -90,6 +103,8 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [ ] Support environments (dev/staging/prod) with separate inventories and vars
   - [ ] Tagging/release strategy (semantic versioning)
   - [ ] Move `_ToDo/` to GitHub Issues
+
+- [x] **Swagger UI Docker setup for live NPM API** — #20 (CLOSED, PR #19)
 
 - [ ] **Documentation**
   - [ ] Add `state: absent` example to README
