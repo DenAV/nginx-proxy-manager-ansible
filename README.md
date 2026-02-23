@@ -92,3 +92,25 @@ ansible-playbook pl_npm-management.yml --vault-password-file .vault-pass
 ```
 
 - An example (unencrypted) template is provided at `roles/npm-management/vars/api_secret.yml.example`.
+
+API Reference (Swagger)
+------------------------
+
+The full NPM REST API spec is available at [`docs/swagger.yaml`](docs/swagger.yaml) (OpenAPI 3.1).
+
+**View interactively** — pick any option:
+
+```bash
+# Option 1 — Swagger UI in Docker (recommended)
+docker run --rm -p 8080:8080 \
+  -e SWAGGER_JSON=/spec/swagger.yaml \
+  -v $(pwd)/docs:/spec \
+  swaggerapi/swagger-ui
+
+# Then open http://localhost:8080
+
+# Option 2 — online editor
+# Paste the file contents into https://editor.swagger.io
+```
+
+The spec includes a module coverage matrix showing which endpoints are currently supported by `npm_proxy.py`.

@@ -1,0 +1,1623 @@
+openapi: "3.1.0"
+info:
+  title: Nginx Proxy Manager API
+  version: "2.x.x"
+  description: |
+    Official API reference for **Nginx Proxy Manager** (NPM).
+
+    Most endpoints require authentication via **Bearer Token (JWT)**.
+    Obtain a token by calling `POST /tokens`.
+
+    Base URL: `http://<npm-host>:81/api`
+
+    ---
+
+    ### Module coverage
+
+    Endpoints used by our Ansible module `npm_proxy.py`:
+
+    | Endpoint                         | Method   | Module action     | Supported |
+    |----------------------------------|----------|-------------------|-----------|
+    | `/tokens`                        | POST     | (role task)       | ✅        |
+    | `/nginx/proxy-hosts`             | GET      | search-host       | ✅        |
+    | `/nginx/proxy-hosts`             | POST     | create-host       | ✅        |
+    | `/nginx/proxy-hosts/{hostID}`    | DELETE   | delete-host       | ✅        |
+    | `/nginx/proxy-hosts/{hostID}`    | PUT      | (update)          | ❌        |
+    | `/nginx/proxy-hosts/{hostID}`    | GET      | (get single)      | ❌        |
+    | `/nginx/proxy-hosts/{id}/enable` | POST     | (enable)          | ❌        |
+    | `/nginx/proxy-hosts/{id}/disable`| POST     | (disable)         | ❌        |
+    | `/nginx/certificates`            | GET      | search-ssl        | ✅        |
+    | `/nginx/certificates`            | POST     | create-ssl        | ✅        |
+    | `/nginx/certificates/{certID}`   | DELETE   | delete-ssl        | ✅        |
+    | `/nginx/certificates/{id}/renew` | POST     | (renew)           | ❌        |
+    | `/nginx/access-lists`            | *        |                   | ❌        |
+    | `/nginx/redirection-hosts`       | *        |                   | ❌        |
+    | `/nginx/dead-hosts`              | *        |                   | ❌        |
+    | `/nginx/streams`                 | *        |                   | ❌        |
+    | `/users`                         | *        |                   | ❌        |
+    | `/settings`                      | *        |                   | ❌        |
+    | `/reports/hosts`                 | GET      |                   | ❌        |
+
+    For more information visit [NPM Documentation](https://nginxproxymanager.com).
+
+servers:
+  - url: http://127.0.0.1:81/api
+    description: Default local NPM instance
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from `POST /tokens`.
+        Pass as header: `Authorization: Bearer <token>`
+
+  schemas:
+    # ── Common types ──────────────────────────────────────
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+              example: 400
+            message:
+              type: string
+              example: "Domains are invalid"
+
+    TokenRequest:
+      type: object
+      required: [identity, secret]
+      additionalProperties: false
+      properties:
+        identity:
+          type: string
+          minLength: 1
+          description: User email
+          example: "admin@example.com"
+        secret:
+          type: string
+          minLength: 1
+          description: User password
+          example: "changeme"
+        scope:
+          type: string
+          enum: [user]
+          example: "user"
+
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.ey...xaHKYr3Kk6MvkUjcC4"
+        expires:
+          type: string
+          format: date-time
+          example: "2026-02-25T20:40:46.340Z"
+
+    # ── Proxy Host ────────────────────────────────────────
+    ProxyHostCreate:
+      type: object
+      required: [domain_names, forward_scheme, forward_host, forward_port]
+      additionalProperties: false
+      properties:
+        domain_names:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+          example: ["test.example.com"]
+        forward_scheme:
+          type: string
+          enum: [http, https]
+          example: "http"
+        forward_host:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Hostname or IP to proxy to
+          example: "127.0.0.1"
+        forward_port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          example: 8080
+        certificate_id:
+          type: integer
+          description: |
+            Certificate ID to assign. Use `0` for none, or `"new"` to request
+            a new Let's Encrypt certificate during host creation.
+          example: 0
+        ssl_forced:
+          type: boolean
+          description: Force SSL (redirect HTTP → HTTPS)
+          example: false
+        hsts_enabled:
+          type: boolean
+          example: false
+        hsts_subdomains:
+          type: boolean
+          example: false
+        trust_forwarded_proto:
+          type: boolean
+          description: Trust the X-Forwarded-Proto header
+          example: false
+        http2_support:
+          type: boolean
+          example: false
+        block_exploits:
+          type: boolean
+          example: false
+        caching_enabled:
+          type: boolean
+          example: false
+        allow_websocket_upgrade:
+          type: boolean
+          description: Allow WebSocket upgrade for all paths
+          example: true
+        access_list_id:
+          type: integer
+          description: Access List ID (0 = publicly accessible)
+          example: 0
+        advanced_config:
+          type: string
+          description: Custom Nginx configuration snippet
+          example: ""
+        enabled:
+          type: boolean
+          example: true
+        meta:
+          type: object
+          description: |
+            Metadata. Used for Let's Encrypt configuration when `certificate_id: "new"`:
+            ```json
+            {
+              "letsencrypt_email": "admin@example.com",
+              "letsencrypt_agree": true,
+              "dns_challenge": false
+            }
+            ```
+          example: {}
+        locations:
+          type: array
+          minItems: 0
+          description: Sub-location routing rules
+          items:
+            type: object
+            required: [forward_scheme, forward_host, forward_port, path]
+            additionalProperties: false
+            properties:
+              id:
+                type: [integer, "null"]
+              path:
+                type: string
+                minLength: 1
+                example: "/app"
+              forward_scheme:
+                type: string
+                enum: [http, https]
+              forward_host:
+                type: string
+                minLength: 1
+                maxLength: 255
+              forward_port:
+                type: integer
+                minimum: 1
+                maximum: 65535
+              forward_path:
+                type: string
+              advanced_config:
+                type: string
+          example:
+            - path: "/app"
+              forward_scheme: "http"
+              forward_host: "example.com"
+              forward_port: 80
+
+    ProxyHost:
+      type: object
+      description: Full Proxy Host object (response)
+      properties:
+        id:
+          type: integer
+          example: 3
+        created_on:
+          type: string
+          format: date-time
+          example: "2025-10-30T01:12:05.000Z"
+        modified_on:
+          type: string
+          format: date-time
+          example: "2025-10-30T01:12:05.000Z"
+        owner_user_id:
+          type: integer
+          example: 1
+        domain_names:
+          type: array
+          items:
+            type: string
+          example: ["test.example.com"]
+        forward_host:
+          type: string
+          example: "127.0.0.1"
+        forward_port:
+          type: integer
+          example: 8080
+        access_list_id:
+          type: integer
+          example: 0
+        certificate_id:
+          type: integer
+          example: 0
+        ssl_forced:
+          type: boolean
+          example: false
+        caching_enabled:
+          type: boolean
+          example: false
+        block_exploits:
+          type: boolean
+          example: false
+        advanced_config:
+          type: string
+          example: ""
+        meta:
+          type: object
+          example:
+            nginx_online: true
+            nginx_err: null
+        allow_websocket_upgrade:
+          type: boolean
+          example: false
+        http2_support:
+          type: boolean
+          example: false
+        forward_scheme:
+          type: string
+          example: "http"
+        enabled:
+          type: boolean
+          example: true
+        locations:
+          type: array
+          items:
+            type: object
+          example: []
+        hsts_enabled:
+          type: boolean
+          example: false
+        hsts_subdomains:
+          type: boolean
+          example: false
+        trust_forwarded_proto:
+          type: boolean
+          example: false
+        certificate:
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/Certificate"
+          example: null
+        owner:
+          type: object
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+            name:
+              type: string
+            nickname:
+              type: string
+            avatar:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+        access_list:
+          oneOf:
+            - type: "null"
+            - type: object
+          example: null
+
+    # ── Certificate ───────────────────────────────────────
+    CertificateCreate:
+      type: object
+      required: [provider]
+      additionalProperties: false
+      properties:
+        provider:
+          type: string
+          enum: [letsencrypt, other]
+          description: |
+            `letsencrypt` — request via Let's Encrypt (requires DNS or HTTP-01).
+            `other` — upload custom certificate.
+          example: "letsencrypt"
+        nice_name:
+          type: string
+          description: Human-friendly certificate name
+          example: "My Test Cert"
+        domain_names:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+          example: ["test.example.com"]
+        meta:
+          type: object
+          additionalProperties: false
+          properties:
+            certificate:
+              type: string
+              description: PEM certificate (for provider `other`)
+            certificate_key:
+              type: string
+              description: PEM private key (for provider `other`)
+            dns_challenge:
+              type: boolean
+              description: Use DNS-01 challenge instead of HTTP-01
+            dns_provider:
+              type: string
+              description: DNS provider name (e.g. cloudflare, route53)
+            dns_provider_credentials:
+              type: string
+              description: DNS provider API credentials
+            propagation_seconds:
+              type: integer
+              minimum: 0
+              description: Seconds to wait for DNS propagation
+            key_type:
+              type: string
+              enum: [rsa, ecdsa]
+              default: rsa
+          example:
+            dns_challenge: false
+
+    Certificate:
+      type: object
+      description: Full Certificate object (response)
+      properties:
+        id:
+          type: integer
+          example: 5
+        created_on:
+          type: string
+          format: date-time
+        modified_on:
+          type: string
+          format: date-time
+        owner_user_id:
+          type: integer
+          example: 1
+        provider:
+          type: string
+          example: "letsencrypt"
+        nice_name:
+          type: string
+          example: "test.example.com"
+        domain_names:
+          type: array
+          items:
+            type: string
+          example: ["test.example.com"]
+        expires_on:
+          type: string
+          format: date-time
+          readOnly: true
+          example: "2026-01-07T04:30:17.000Z"
+        meta:
+          type: object
+          properties:
+            dns_challenge:
+              type: boolean
+            letsencrypt_certificate:
+              type: object
+              properties:
+                cn:
+                  type: string
+                issuer:
+                  type: string
+                dates:
+                  type: object
+                  properties:
+                    from:
+                      type: integer
+                    to:
+                      type: integer
+
+tags:
+  - name: tokens
+    description: Authentication token management
+  - name: proxy-hosts
+    description: Proxy Host management
+  - name: certificates
+    description: SSL Certificate management
+  - name: access-lists
+    description: Access List management
+  - name: redirection-hosts
+    description: Redirection Host management
+  - name: dead-hosts
+    description: 404 (Dead) Host management
+  - name: streams
+    description: TCP/UDP Stream management
+  - name: users
+    description: User management
+  - name: settings
+    description: Application settings
+  - name: reports
+    description: Reports
+  - name: audit-log
+    description: Audit log
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  PATHS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+paths:
+  # ── Health ──────────────────────────────────────────────
+  /:
+    get:
+      operationId: health
+      summary: Health check
+      tags: [public]
+      description: Returns API status. No authentication required.
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              example:
+                status: "OK"
+                version:
+                  major: 2
+                  minor: 12
+                  revision: 0
+
+  # ── Tokens ──────────────────────────────────────────────
+  /tokens:
+    post:
+      operationId: requestToken
+      summary: Request a new access token
+      tags: [tokens]
+      description: |
+        Authenticate with email and password to receive a JWT token.
+        The token is valid for ~24 hours.
+
+        **Default credentials** (first run): `admin@example.com` / `changeme`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+            example:
+              identity: "admin@example.com"
+              secret: "changeme"
+      responses:
+        "200":
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+              example:
+                token: "eyJhbGciOiJSUzUxMiJ9..."
+                expires: "2026-02-25T20:40:46.340Z"
+
+    get:
+      operationId: refreshToken
+      summary: Refresh your access token
+      tags: [tokens]
+      security:
+        - bearerAuth: []
+      description: Returns a fresh token using the current valid token.
+      responses:
+        "200":
+          description: Refreshed token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+
+  # ── Proxy Hosts ─────────────────────────────────────────
+  /nginx/proxy-hosts:
+    get:
+      operationId: getProxyHosts
+      summary: Get all proxy hosts
+      tags: [proxy-hosts]
+      security:
+        - bearerAuth: [proxy_hosts.view]
+      parameters:
+        - in: query
+          name: expand
+          description: Include related objects
+          schema:
+            type: string
+            enum: [access_list, owner, certificate]
+      responses:
+        "200":
+          description: List of proxy hosts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProxyHost"
+
+    post:
+      operationId: createProxyHost
+      summary: Create a proxy host
+      tags: [proxy-hosts]
+      security:
+        - bearerAuth: [proxy_hosts.manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProxyHostCreate"
+            examples:
+              minimal:
+                summary: Minimal proxy host
+                value:
+                  domain_names: ["test.example.com"]
+                  forward_scheme: "http"
+                  forward_host: "127.0.0.1"
+                  forward_port: 8080
+              with_ssl:
+                summary: Proxy host with Let's Encrypt SSL
+                value:
+                  domain_names: ["secure.example.com"]
+                  forward_scheme: "http"
+                  forward_host: "10.0.0.5"
+                  forward_port: 443
+                  certificate_id: "new"
+                  ssl_forced: true
+                  allow_websocket_upgrade: true
+                  meta:
+                    letsencrypt_email: "admin@example.com"
+                    letsencrypt_agree: true
+                    dns_challenge: false
+              with_locations:
+                summary: Proxy host with sub-locations
+                value:
+                  domain_names: ["app.example.com"]
+                  forward_scheme: "http"
+                  forward_host: "10.0.0.1"
+                  forward_port: 80
+                  locations:
+                    - path: "/api"
+                      forward_scheme: "http"
+                      forward_host: "10.0.0.2"
+                      forward_port: 3000
+                    - path: "/static"
+                      forward_scheme: "http"
+                      forward_host: "10.0.0.3"
+                      forward_port: 8080
+      responses:
+        "201":
+          description: Proxy host created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProxyHost"
+
+  /nginx/proxy-hosts/{hostID}:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+        description: Proxy Host ID
+        example: 2
+
+    get:
+      operationId: getProxyHost
+      summary: Get a single proxy host
+      tags: [proxy-hosts]
+      security:
+        - bearerAuth: [proxy_hosts.view]
+      responses:
+        "200":
+          description: Proxy host object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProxyHost"
+
+    put:
+      operationId: updateProxyHost
+      summary: Update a proxy host
+      tags: [proxy-hosts]
+      security:
+        - bearerAuth: [proxy_hosts.manage]
+      description: |
+        Partial update — only the fields you send will be changed.
+        At least one property is required (`minProperties: 1`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProxyHostCreate"
+            example:
+              forward_port: 9090
+              ssl_forced: true
+      responses:
+        "200":
+          description: Updated proxy host
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProxyHost"
+
+    delete:
+      operationId: deleteProxyHost
+      summary: Delete a proxy host
+      tags: [proxy-hosts]
+      security:
+        - bearerAuth: [proxy_hosts.manage]
+      responses:
+        "200":
+          description: Proxy host deleted
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: true
+
+  /nginx/proxy-hosts/{hostID}/enable:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: enableProxyHost
+      summary: Enable a proxy host
+      tags: [proxy-hosts]
+      security:
+        - bearerAuth: [proxy_hosts.manage]
+      responses:
+        "200":
+          description: Host enabled
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: true
+        "400":
+          description: Host already enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error:
+                  code: 400
+                  message: "Host is already enabled"
+
+  /nginx/proxy-hosts/{hostID}/disable:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: disableProxyHost
+      summary: Disable a proxy host
+      tags: [proxy-hosts]
+      security:
+        - bearerAuth: [proxy_hosts.manage]
+      responses:
+        "200":
+          description: Host disabled
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: true
+        "400":
+          description: Host already disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error:
+                  code: 400
+                  message: "Host is already disabled"
+
+  # ── Certificates ────────────────────────────────────────
+  /nginx/certificates:
+    get:
+      operationId: getCertificates
+      summary: Get all certificates
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.view]
+      parameters:
+        - in: query
+          name: expand
+          description: Include related objects
+          schema:
+            type: string
+            enum: [owner]
+      responses:
+        "200":
+          description: List of certificates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Certificate"
+
+    post:
+      operationId: createCertificate
+      summary: Create a certificate
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.manage]
+      description: |
+        Request a new Let's Encrypt certificate or upload a custom one.
+
+        For **Let's Encrypt HTTP-01** (default):
+        - Port 80 must be accessible from the internet
+        - DNS A-record must point to this server
+
+        For **DNS-01 challenge** set `meta.dns_challenge: true` and provide
+        `meta.dns_provider` + `meta.dns_provider_credentials`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificateCreate"
+            examples:
+              letsencrypt_http:
+                summary: Let's Encrypt (HTTP-01)
+                value:
+                  provider: "letsencrypt"
+                  domain_names: ["test.example.com"]
+                  meta:
+                    dns_challenge: false
+              letsencrypt_dns:
+                summary: Let's Encrypt (DNS-01 with Cloudflare)
+                value:
+                  provider: "letsencrypt"
+                  domain_names: ["*.example.com"]
+                  meta:
+                    dns_challenge: true
+                    dns_provider: "cloudflare"
+                    dns_provider_credentials: "dns_cloudflare_api_token = YOUR_TOKEN"
+                    propagation_seconds: 30
+              custom:
+                summary: Custom certificate upload
+                value:
+                  provider: "other"
+                  nice_name: "My Custom Cert"
+                  domain_names: ["internal.example.com"]
+                  meta:
+                    certificate: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                    certificate_key: "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+      responses:
+        "201":
+          description: Certificate created / issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+        "400":
+          description: Invalid domains or challenge failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /nginx/certificates/validate:
+    post:
+      operationId: validateCertificate
+      summary: Validate certificate files
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.manage]
+      responses:
+        "200":
+          description: Validation result
+
+  /nginx/certificates/test-http:
+    post:
+      operationId: testHttpChallenge
+      summary: Test HTTP-01 challenge reachability
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.manage]
+      description: Tests whether the domain is reachable on port 80 for HTTP-01 validation.
+      responses:
+        "200":
+          description: Test result
+
+  /nginx/certificates/dns-providers:
+    get:
+      operationId: getDnsProviders
+      summary: Get available DNS providers
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.view]
+      description: Returns the list of supported DNS providers for DNS-01 challenges.
+      responses:
+        "200":
+          description: List of DNS providers
+
+  /nginx/certificates/{certID}:
+    parameters:
+      - in: path
+        name: certID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+        description: Certificate ID
+        example: 2
+
+    get:
+      operationId: getCertificate
+      summary: Get a single certificate
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.view]
+      responses:
+        "200":
+          description: Certificate object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+
+    delete:
+      operationId: deleteCertificate
+      summary: Delete a certificate
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.manage]
+      responses:
+        "200":
+          description: Certificate deleted
+          content:
+            application/json:
+              schema:
+                type: boolean
+              example: true
+
+  /nginx/certificates/{certID}/download:
+    parameters:
+      - in: path
+        name: certID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      operationId: downloadCertificate
+      summary: Download certificate files
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.manage]
+      responses:
+        "200":
+          description: Certificate archive (zip / tar)
+
+  /nginx/certificates/{certID}/renew:
+    parameters:
+      - in: path
+        name: certID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: renewCertificate
+      summary: Renew a certificate
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.manage]
+      responses:
+        "200":
+          description: Renewed certificate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+
+  /nginx/certificates/{certID}/upload:
+    parameters:
+      - in: path
+        name: certID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: uploadCertificate
+      summary: Upload certificate files
+      tags: [certificates]
+      security:
+        - bearerAuth: [certificates.manage]
+      responses:
+        "200":
+          description: Certificate uploaded
+
+  # ── Access Lists ────────────────────────────────────────
+  /nginx/access-lists:
+    get:
+      operationId: getAccessLists
+      summary: Get all access lists
+      tags: [access-lists]
+      security:
+        - bearerAuth: [access_lists.view]
+      responses:
+        "200":
+          description: List of access lists
+
+    post:
+      operationId: createAccessList
+      summary: Create an access list
+      tags: [access-lists]
+      security:
+        - bearerAuth: [access_lists.manage]
+      responses:
+        "201":
+          description: Access list created
+
+  /nginx/access-lists/{listID}:
+    parameters:
+      - in: path
+        name: listID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      operationId: getAccessList
+      summary: Get an access list
+      tags: [access-lists]
+      security:
+        - bearerAuth: [access_lists.view]
+      responses:
+        "200":
+          description: Access list object
+
+    put:
+      operationId: updateAccessList
+      summary: Update an access list
+      tags: [access-lists]
+      security:
+        - bearerAuth: [access_lists.manage]
+      responses:
+        "200":
+          description: Updated access list
+
+    delete:
+      operationId: deleteAccessList
+      summary: Delete an access list
+      tags: [access-lists]
+      security:
+        - bearerAuth: [access_lists.manage]
+      responses:
+        "200":
+          description: Access list deleted
+
+  # ── Redirection Hosts ──────────────────────────────────
+  /nginx/redirection-hosts:
+    get:
+      operationId: getRedirectionHosts
+      summary: Get all redirection hosts
+      tags: [redirection-hosts]
+      security:
+        - bearerAuth: [redirection_hosts.view]
+      responses:
+        "200":
+          description: List of redirection hosts
+
+    post:
+      operationId: createRedirectionHost
+      summary: Create a redirection host
+      tags: [redirection-hosts]
+      security:
+        - bearerAuth: [redirection_hosts.manage]
+      responses:
+        "201":
+          description: Redirection host created
+
+  /nginx/redirection-hosts/{hostID}:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      operationId: getRedirectionHost
+      summary: Get a redirection host
+      tags: [redirection-hosts]
+      security:
+        - bearerAuth: [redirection_hosts.view]
+      responses:
+        "200":
+          description: Redirection host object
+
+    put:
+      operationId: updateRedirectionHost
+      summary: Update a redirection host
+      tags: [redirection-hosts]
+      security:
+        - bearerAuth: [redirection_hosts.manage]
+      responses:
+        "200":
+          description: Updated redirection host
+
+    delete:
+      operationId: deleteRedirectionHost
+      summary: Delete a redirection host
+      tags: [redirection-hosts]
+      security:
+        - bearerAuth: [redirection_hosts.manage]
+      responses:
+        "200":
+          description: Redirection host deleted
+
+  /nginx/redirection-hosts/{hostID}/enable:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: enableRedirectionHost
+      summary: Enable a redirection host
+      tags: [redirection-hosts]
+      security:
+        - bearerAuth: [redirection_hosts.manage]
+      responses:
+        "200":
+          description: Redirection host enabled
+
+  /nginx/redirection-hosts/{hostID}/disable:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: disableRedirectionHost
+      summary: Disable a redirection host
+      tags: [redirection-hosts]
+      security:
+        - bearerAuth: [redirection_hosts.manage]
+      responses:
+        "200":
+          description: Redirection host disabled
+
+  # ── Dead Hosts (404) ───────────────────────────────────
+  /nginx/dead-hosts:
+    get:
+      operationId: getDeadHosts
+      summary: Get all 404 hosts
+      tags: [dead-hosts]
+      security:
+        - bearerAuth: [dead_hosts.view]
+      responses:
+        "200":
+          description: List of dead hosts
+
+    post:
+      operationId: createDeadHost
+      summary: Create a 404 host
+      tags: [dead-hosts]
+      security:
+        - bearerAuth: [dead_hosts.manage]
+      responses:
+        "201":
+          description: Dead host created
+
+  /nginx/dead-hosts/{hostID}:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      operationId: getDeadHost
+      summary: Get a 404 host
+      tags: [dead-hosts]
+      security:
+        - bearerAuth: [dead_hosts.view]
+      responses:
+        "200":
+          description: Dead host object
+
+    put:
+      operationId: updateDeadHost
+      summary: Update a 404 host
+      tags: [dead-hosts]
+      security:
+        - bearerAuth: [dead_hosts.manage]
+      responses:
+        "200":
+          description: Updated dead host
+
+    delete:
+      operationId: deleteDeadHost
+      summary: Delete a 404 host
+      tags: [dead-hosts]
+      security:
+        - bearerAuth: [dead_hosts.manage]
+      responses:
+        "200":
+          description: Dead host deleted
+
+  /nginx/dead-hosts/{hostID}/enable:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: enableDeadHost
+      summary: Enable a 404 host
+      tags: [dead-hosts]
+      security:
+        - bearerAuth: [dead_hosts.manage]
+      responses:
+        "200":
+          description: Dead host enabled
+
+  /nginx/dead-hosts/{hostID}/disable:
+    parameters:
+      - in: path
+        name: hostID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: disableDeadHost
+      summary: Disable a 404 host
+      tags: [dead-hosts]
+      security:
+        - bearerAuth: [dead_hosts.manage]
+      responses:
+        "200":
+          description: Dead host disabled
+
+  # ── Streams ────────────────────────────────────────────
+  /nginx/streams:
+    get:
+      operationId: getStreams
+      summary: Get all streams
+      tags: [streams]
+      security:
+        - bearerAuth: [streams.view]
+      responses:
+        "200":
+          description: List of streams
+
+    post:
+      operationId: createStream
+      summary: Create a stream
+      tags: [streams]
+      security:
+        - bearerAuth: [streams.manage]
+      responses:
+        "201":
+          description: Stream created
+
+  /nginx/streams/{streamID}:
+    parameters:
+      - in: path
+        name: streamID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      operationId: getStream
+      summary: Get a stream
+      tags: [streams]
+      security:
+        - bearerAuth: [streams.view]
+      responses:
+        "200":
+          description: Stream object
+
+    put:
+      operationId: updateStream
+      summary: Update a stream
+      tags: [streams]
+      security:
+        - bearerAuth: [streams.manage]
+      responses:
+        "200":
+          description: Updated stream
+
+    delete:
+      operationId: deleteStream
+      summary: Delete a stream
+      tags: [streams]
+      security:
+        - bearerAuth: [streams.manage]
+      responses:
+        "200":
+          description: Stream deleted
+
+  /nginx/streams/{streamID}/enable:
+    parameters:
+      - in: path
+        name: streamID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: enableStream
+      summary: Enable a stream
+      tags: [streams]
+      security:
+        - bearerAuth: [streams.manage]
+      responses:
+        "200":
+          description: Stream enabled
+
+  /nginx/streams/{streamID}/disable:
+    parameters:
+      - in: path
+        name: streamID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: disableStream
+      summary: Disable a stream
+      tags: [streams]
+      security:
+        - bearerAuth: [streams.manage]
+      responses:
+        "200":
+          description: Stream disabled
+
+  # ── Users ──────────────────────────────────────────────
+  /users:
+    get:
+      operationId: getUsers
+      summary: Get all users
+      tags: [users]
+      security:
+        - bearerAuth: [users.manage]
+      responses:
+        "200":
+          description: List of users
+
+    post:
+      operationId: createUser
+      summary: Create a user
+      tags: [users]
+      security:
+        - bearerAuth: [users.manage]
+      responses:
+        "201":
+          description: User created
+
+  /users/{userID}:
+    parameters:
+      - in: path
+        name: userID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      operationId: getUser
+      summary: Get a user
+      tags: [users]
+      security:
+        - bearerAuth: [users.manage]
+      responses:
+        "200":
+          description: User object
+
+    put:
+      operationId: updateUser
+      summary: Update a user
+      tags: [users]
+      security:
+        - bearerAuth: [users.manage]
+      responses:
+        "200":
+          description: Updated user
+
+    delete:
+      operationId: deleteUser
+      summary: Delete a user
+      tags: [users]
+      security:
+        - bearerAuth: [users.manage]
+      responses:
+        "200":
+          description: User deleted
+
+  /users/{userID}/auth:
+    parameters:
+      - in: path
+        name: userID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    put:
+      operationId: updateUserAuth
+      summary: Update user authentication
+      tags: [users]
+      security:
+        - bearerAuth: [users.manage]
+      responses:
+        "200":
+          description: Auth updated
+
+  /users/{userID}/permissions:
+    parameters:
+      - in: path
+        name: userID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    put:
+      operationId: updateUserPermissions
+      summary: Update user permissions
+      tags: [users]
+      security:
+        - bearerAuth: [users.manage]
+      responses:
+        "200":
+          description: Permissions updated
+
+  /users/{userID}/login:
+    parameters:
+      - in: path
+        name: userID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: loginAsUser
+      summary: Log in as a user
+      tags: [users]
+      security:
+        - bearerAuth: [users.manage]
+      responses:
+        "200":
+          description: Token for the target user
+
+  /users/{userID}/2fa:
+    parameters:
+      - in: path
+        name: userID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      operationId: get2FA
+      summary: Get 2FA status
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 2FA status
+
+    post:
+      operationId: setup2FA
+      summary: Set up 2FA
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 2FA setup info
+
+    delete:
+      operationId: disable2FA
+      summary: Disable 2FA
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 2FA disabled
+
+  /users/{userID}/2fa/enable:
+    parameters:
+      - in: path
+        name: userID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: enable2FA
+      summary: Enable 2FA (confirm setup)
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 2FA enabled
+
+  /users/{userID}/2fa/backup-codes:
+    parameters:
+      - in: path
+        name: userID
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    post:
+      operationId: regenerateBackupCodes
+      summary: Regenerate 2FA backup codes
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: New backup codes
+
+  # ── Settings ───────────────────────────────────────────
+  /settings:
+    get:
+      operationId: getSettings
+      summary: Get all settings
+      tags: [settings]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Application settings
+
+  /settings/{settingID}:
+    parameters:
+      - in: path
+        name: settingID
+        required: true
+        schema:
+          type: string
+
+    get:
+      operationId: getSetting
+      summary: Get a setting
+      tags: [settings]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Setting value
+
+    put:
+      operationId: updateSetting
+      summary: Update a setting
+      tags: [settings]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Updated setting
+
+  # ── Reports ────────────────────────────────────────────
+  /reports/hosts:
+    get:
+      operationId: getHostsReport
+      summary: Get hosts report
+      tags: [reports]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Host count summary
+
+  # ── Audit Log ──────────────────────────────────────────
+  /audit-log:
+    get:
+      operationId: getAuditLog
+      summary: Get all audit log entries
+      tags: [audit-log]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of audit log entries
+
+  /audit-log/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      operationId: getAuditLogEntry
+      summary: Get a single audit log entry
+      tags: [audit-log]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Audit log entry
+
+  # ── Schema ─────────────────────────────────────────────
+  /schema:
+    get:
+      operationId: getSchema
+      summary: Get the API schema
+      tags: [public]
+      description: Returns this OpenAPI schema. No authentication required.
+      responses:
+        "200":
+          description: OpenAPI schema
+
+  # ── Version ────────────────────────────────────────────
+  /version/check:
+    get:
+      operationId: checkVersion
+      summary: Check for version updates
+      tags: [public]
+      responses:
+        "200":
+          description: Version info
+
+  # ── 2FA Token ──────────────────────────────────────────
+  /tokens/2fa:
+    post:
+      operationId: verify2FA
+      summary: Complete 2FA authentication
+      tags: [tokens]
+      description: Submit the 2FA code to complete login after receiving a challenge from `POST /tokens`.
+      responses:
+        "200":
+          description: Token issued after 2FA
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"

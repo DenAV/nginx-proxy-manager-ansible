@@ -20,19 +20,19 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
 
 ## P0 — Critical (fix immediately)
 
-- [ ] **Bugs in `library/npm_proxy.py`**
-  - [ ] Fix `module.fail_json("...")` → `module.fail_json(msg="...")` (positional arg will cause an error)
-  - [ ] Add `timeout=10` to all `requests.get/post/delete` calls
-  - [ ] Add `try/except` for `requests.exceptions.ConnectionError`, `Timeout`
-  - [ ] Handle unknown `action` in `build_url()` (currently returns `None` → crash)
-  - [ ] Remove unused import `from ansible.module_utils.urls import fetch_url`
-  - [ ] Fix `choices=['absent', 'present']` in DOCUMENTATION to YAML format
-  - [ ] Fix `search_proxy_host` return type — return `None` or `{}` instead of empty string `""`
+- [x] **Bugs in `library/npm_proxy.py`**
+  - [x] Fix `module.fail_json("...")` → `module.fail_json(msg="...")` (positional arg will cause an error)
+  - [x] Add `timeout=10` to all `requests.get/post/delete` calls
+  - [x] Add `try/except` for `requests.exceptions.ConnectionError`, `Timeout`
+  - [x] Handle unknown `action` in `build_url()` (currently returns `None` → crash)
+  - [x] Remove unused import `from ansible.module_utils.urls import fetch_url`
+  - [x] Fix `choices=['absent', 'present']` in DOCUMENTATION to YAML format
+  - [x] Fix `search_proxy_host` return type — return `None` or `{}` instead of empty string `""`
 
-- [ ] **Typos**
-  - [ ] `"remowed"` → `"removed"` (npm_proxy.py, lines ~207, 210, 249)
-  - [ ] `"npm-managenment"` → `"npm-management"` (tasks/main.yml, vars/main.yml)
-  - [ ] `"IWhether"` → `"Whether"` (README.md, roles/npm-management/README.md)
+- [x] **Typos**
+  - [x] `"remowed"` → `"removed"` (npm_proxy.py, lines ~207, 210, 249)
+  - [x] `"npm-managenment"` → `"npm-management"` (tasks/main.yml, vars/main.yml)
+  - [x] `"IWhether"` → `"Whether"` (README.md, roles/npm-management/README.md)
 
 - [ ] **Security: secrets**
   - [ ] Remove `api_secret.yml` from git history (`git filter-repo`)
