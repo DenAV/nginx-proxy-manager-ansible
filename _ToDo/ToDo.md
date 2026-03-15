@@ -124,5 +124,5 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [ ] Add `CODEOWNERS`
   - [ ] Add Dependabot / Renovate for Docker image tags
 
-- [ ] **`.gitignore`** — [#14](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/14)
-  - [ ] Reformat — one entry per line (currently many entries are merged into single lines)
+- [x] **`.gitignore`** — [#14](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/14) (CLOSED, PR #29)
+  - [x] Reformat — one entry per line (currently many entries are merged into single lines)
