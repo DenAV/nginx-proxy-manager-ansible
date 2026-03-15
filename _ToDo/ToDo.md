@@ -77,10 +77,10 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [ ] Verify Swagger UI loads the NPM schema successfully
   - [ ] Update wiki API Reference page
 
-- [ ] **Deployment Guide wiki page (Hetzner Cloud + Azure ACI)** — [#22](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/22)
-  - [ ] Hetzner CX22 + Docker CE: full `hcloud` CLI commands, firewall, docker-compose
-  - [ ] Azure ACI: `az` CLI commands, storage mount, YAML deployment file
-  - [ ] Comparison table, Ansible inventory examples
+- [x] **Deployment Guide wiki page (Hetzner Cloud + Azure ACI)** — [#22](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/22)
+  - [x] Hetzner CX22 + Docker CE: full `hcloud` CLI commands, firewall, docker-compose
+  - [x] Azure ACI: `az` CLI commands, storage mount, YAML deployment file
+  - [x] Comparison table, Ansible inventory examples
 
 - [x] **Add `letsencrypt_email` to `npm_proxy.py` (replaces certificate.js hack)** — [#15](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/15) (CLOSED, PR #28)
   - [x] Add `letsencrypt_email` parameter to module `argument_spec`
