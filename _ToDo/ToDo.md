@@ -106,14 +106,14 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
 
 - [x] **Swagger UI Docker setup for live NPM API** — [#20](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/20) (CLOSED, PR #19)
 
-- [ ] **Documentation** — [#12](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/12)
-  - [ ] Add `state: absent` example to README
-  - [ ] Add `host_port` usage example
-  - [ ] Add inventory example (host groups, group_vars)
-  - [ ] Add troubleshooting section (API errors, auth issues, certificate challenges)
-  - [ ] Remove placeholder text from `roles/npm-management/README.md`
-  - [ ] Remove AI-generated commentary from `library/README.md`
-  - [ ] Update NPM version (2.10.3 → current)
+- [x] **Documentation** — [#12](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/12)
+  - [x] Add `state: absent` example to README
+  - [x] Add `host_port` usage example
+  - [x] Add inventory example (host groups, group_vars)
+  - [x] Add troubleshooting section (wiki Troubleshooting page, linked from README)
+  - [x] Remove placeholder text from `roles/npm-management/README.md`
+  - [x] Remove AI-generated commentary from `library/README.md`
+  - [x] Update NPM version (2.10.3 → current 2.11.x)
 
 - [ ] **Packaging & structure** — [#13](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/13)
   - [ ] Convert to Ansible Collection

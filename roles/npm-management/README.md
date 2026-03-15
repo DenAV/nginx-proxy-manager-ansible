@@ -1,21 +1,15 @@
-## NPM-MANAGEMENT
-## Ansible role for [Nginx Proxy Manager v2.10.3](https://github.com/NginxProxyManager/nginx-proxy-manager/tree/v2.10.3).
-a simple way to add a new proxy host via ansible playbook.
-Checked for version v2.10.3.
+# npm-management
 
-=========
+Ansible role for managing [Nginx Proxy Manager](https://nginxproxymanager.com/) proxy hosts via the REST API.
 
-description
------------
+Create, delete, and batch-manage reverse proxy entries with SSL (Let's Encrypt) — no UI interaction required.
 
-a simple way to add a new proxy host or to delete via ansible playbook
+## Requirements
 
-Requirements
-------------
-
-This role requires Ansible 2.7 or higher, Docker and Docker-Compose.
-
-Change and update a [docker-compose.yml](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/docker/docker-compose_npm.yml) file. Bring up your stack by running docker-compose, further info [here](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/docker).
+- Ansible >= 2.12
+- Python >= 3.9
+- Docker & Docker Compose
+- Nginx Proxy Manager instance (tested with v2.11.x)
 
 Role Variables
 --------------
@@ -33,7 +27,7 @@ Role Variables
 - `npm_api_state` - Whether to create (`present`) or remove (`absent`) a proxy host. Default is `present`.
 - `npm_api_hosts` - List of proxy hosts for batch operations. Default is `[]` (empty, use single host variables instead).
 
-See the [`defaults/main.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/roles/npm-management/defaults/main.yml) or [`vars/*.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/roles/npm-management/vars) file listing all possible options which you can be passed to a runner registration command.
+See [`defaults/main.yml`](defaults/main.yml) for all available options.
 
 ### Overriding Variables
 
@@ -59,15 +53,7 @@ ansible-playbook pl_npm-management.yml \
 ```
 
 
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+## Example Playbook
 
 ```yaml
 - name: NPM - create proxy host
@@ -79,6 +65,7 @@ Including an example of how to use your role (for instance, with variables passe
       npm_api_domain_name: "site-2.example.com"
       npm_api_host: "172.16.1.2"
       npm_api_ssl_forced: true
+      npm_api_letsencrypt_email: "admin@example.com"
       npm_api_state: present
 ```
 
@@ -109,6 +96,7 @@ Including an example of how to use your role (for instance, with variables passe
         - domain_name: "site-a.example.com"
           host: "172.16.1.10"
           ssl_forced: true
+          letsencrypt_email: "admin@example.com"
           state: present
         - domain_name: "site-b.example.com"
           host: "172.16.1.20"
@@ -119,14 +107,12 @@ Including an example of how to use your role (for instance, with variables passe
           state: absent
 ```
 
-License
--------
+## License
 
-BSD
+[MIT](../../LICENSE)
 
-Author Information
-------------------
+## Author
 
-https://github.com/DenAV
+[DenAV](https://github.com/DenAV)
 
 

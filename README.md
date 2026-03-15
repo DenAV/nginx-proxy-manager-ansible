@@ -1,21 +1,69 @@
-## Ansible role for [Nginx Proxy Manager v2.10.3](https://github.com/NginxProxyManager/nginx-proxy-manager/tree/v2.10.3).
-a simple way to add a new proxy host via ansible playbook.
-Checked for version v2.10.3.
+# Ansible Role — Nginx Proxy Manager
 
-Description
------------
-module: nginx-proxy-manager-ansible
-description: a simple way to add a new proxy host or to delete via ansible playbook
+[![CI — Lint & Unit Tests](https://github.com/DenAV/nginx-proxy-manager-ansible/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/DenAV/nginx-proxy-manager-ansible/actions/workflows/ci.yml)
 
-Requirements
-------------
+Ansible role and custom module for managing [Nginx Proxy Manager](https://nginxproxymanager.com/) proxy hosts via the REST API. Create, delete, and batch-manage reverse proxy entries with SSL (Let's Encrypt) — no UI interaction required.
 
-This role requires Ansible 2.7 or higher, Docker and Docker-Compose.
+## Features
 
-Change and update a [docker-compose.yml](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/docker/docker-compose_npm.yml) file. Bring up your stack by running docker-compose, further info [here](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/docker).
+- Create and delete proxy hosts via NPM API
+- Batch operations — manage multiple hosts from a single YAML list
+- Automatic SSL certificate provisioning (Let's Encrypt)
+- Ansible Vault integration for secure credential storage
+- Cloud deployment manifests (Hetzner Cloud, Azure ACI)
+- CI/CD with GitHub Actions (lint, unit tests, Molecule integration tests)
 
-Role Variables
---------------
+**Full documentation:** [Wiki](https://github.com/DenAV/nginx-proxy-manager-ansible/wiki)
+
+## Requirements
+
+- Ansible >= 2.12
+- Python >= 3.9
+- Docker & Docker Compose
+- Nginx Proxy Manager instance (tested with v2.11.x)
+
+## Project Structure
+
+```
+nginx-proxy-manager-ansible/
+├── library/
+│   └── npm_proxy.py           # Custom Ansible module (NPM API client)
+├── roles/
+│   └── npm-management/        # Main role (tasks, defaults, vars, meta)
+├── deploy/
+│   ├── azure/npm-aci.yaml     # Azure ACI deployment manifest
+│   └── hetzner/               # Hetzner Cloud quickstart
+├── docker/
+│   └── docker-compose_npm.yml # Docker Compose for NPM
+├── docs/
+│   └── swagger.yaml           # NPM REST API spec (OpenAPI 3.1)
+├── tests/
+│   └── test_npm_proxy.py      # Unit tests (pytest)
+├── molecule/
+│   └── default/               # Molecule integration tests
+├── .github/workflows/
+│   ├── ci.yml                 # CI: lint + syntax + unit tests
+│   └── integration.yml        # Integration: Molecule + Docker
+├── pl_npm-management.yml      # Main playbook
+└── requirements-dev.txt       # Dev dependencies
+```
+
+## Quick Start
+
+1. Start NPM with Docker Compose:
+
+```bash
+cd docker
+docker compose -f docker-compose_npm.yml up -d
+```
+
+2. Run the playbook:
+
+```bash
+ansible-playbook pl_npm-management.yml --ask-vault-pass
+```
+
+## Role Variables
 
 - `npm_api_url` - NPM REST API base URL. Default is `http://localhost:81/api`.
 - `npm_user` - User to authenticate the Nginx Proxy Manager REST API.
@@ -30,7 +78,7 @@ Role Variables
 - `npm_api_state` - Whether to create (`present`) or remove (`absent`) a proxy host. Default is `present`.
 - `npm_api_hosts` - List of proxy hosts for batch operations. Default is `[]`.
 
-See the [`defaults/main.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/roles/npm-management/defaults/main.yml) or [`vars/*.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/roles/npm-management/vars) file listing all possible options which you can be passed to a runner registration command.
+See [`defaults/main.yml`](roles/npm-management/defaults/main.yml) for all available options.
 
 ### Overriding Variables
 
@@ -56,8 +104,7 @@ ansible-playbook pl_npm-management.yml \
   --extra-vars "npm_api_url=http://10.0.0.5:81/api"
 ```
 
-Example Playbook
-----------------
+## Example Playbook
 
 ```yaml
 - name: NPM - create proxy host
@@ -69,6 +116,7 @@ Example Playbook
       npm_api_domain_name: "site-2.example.com"
       npm_api_host: "172.16.1.2"
       npm_api_ssl_forced: true
+      npm_api_letsencrypt_email: "admin@example.com"
       npm_api_state: present
 
 ```
@@ -101,6 +149,7 @@ Example Playbook
         - domain_name: "site-a.example.com"
           host: "172.16.1.10"
           ssl_forced: true
+          letsencrypt_email: "admin@example.com"
           state: present
         - domain_name: "site-b.example.com"
           host: "172.16.1.20"
@@ -109,8 +158,7 @@ Example Playbook
 
 ```
 
-Linting
--------
+## Linting
 
 - Install dev tools:
 
@@ -132,8 +180,7 @@ ansible-lint .
 flake8 library/npm_proxy.py
 ```
 
-Secrets Management (Vault)
---------------------------
+## Secrets Management (Vault)
 
 - Store API credentials in an encrypted vault file at `roles/npm-management/vars/api_secret.yml`.
 - Create and edit the vault file:
@@ -156,8 +203,7 @@ ansible-playbook pl_npm-management.yml --vault-password-file .vault-pass
 
 - An example (unencrypted) template is provided at `roles/npm-management/vars/api_secret.yml.example`.
 
-API Reference (Swagger)
-------------------------
+## API Reference (Swagger)
 
 The full NPM REST API spec is available at [`docs/swagger.yaml`](docs/swagger.yaml) (OpenAPI 3.1).
 
@@ -178,11 +224,16 @@ docker run --rm -p 8080:8080 \
 
 The spec includes a module coverage matrix showing which endpoints are currently supported by `npm_proxy.py`.
 
-Deployment Guide
-----------------
+## Deployment Guide
 
 For step-by-step cloud deployment instructions see the [Deployment Guide](https://github.com/DenAV/nginx-proxy-manager-ansible/wiki/Deployment-Guide) wiki page, covering:
 
 - **Hetzner Cloud** — CX22 VM + Docker CE (from EUR 3.49/month)
 - **Azure Container Instances** — serverless container (~USD 35/month)
 - Ansible inventory examples for both providers
+
+Cloud-specific manifests are in the [`deploy/`](deploy/) directory.
+
+## License
+
+[MIT](LICENSE)
