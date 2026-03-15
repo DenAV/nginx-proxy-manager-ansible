@@ -232,7 +232,7 @@ class TestCreateProxyHost:
         module = MagicMock()
         rc, msg = npm_proxy.create_proxy_host(
             module, "http://localhost:81/api", "token",
-            "new-site.example.com", "10.0.0.1", 80, False
+            "new-site.example.com", "10.0.0.1", 80, False, ''
         )
         assert rc == 1
         assert "created" in msg
@@ -244,7 +244,7 @@ class TestCreateProxyHost:
         module = MagicMock()
         rc, msg = npm_proxy.create_proxy_host(
             module, "http://localhost:81/api", "token",
-            "existing.example.com", "10.0.0.1", 80, False
+            "existing.example.com", "10.0.0.1", 80, False, ''
         )
         assert rc == 0
         assert "already exists" in msg
@@ -261,7 +261,7 @@ class TestCreateProxyHost:
         module = MagicMock()
         rc, msg = npm_proxy.create_proxy_host(
             module, "http://localhost:81/api", "token",
-            "ssl-site.example.com", "10.0.0.1", 443, True
+            "ssl-site.example.com", "10.0.0.1", 443, True, ''
         )
         assert rc == 1
 
@@ -270,6 +270,33 @@ class TestCreateProxyHost:
         data = json.loads(call_args.kwargs.get("data") or call_args[1].get("data"))
         assert data["ssl_forced"] is True
         assert data["certificate_id"] == "new"
+        assert "meta" not in data
+
+    @patch("npm_proxy.http_request")
+    @patch("npm_proxy.search_proxy_host")
+    def test_create_with_ssl_and_letsencrypt(self, mock_search, mock_http):
+        mock_search.return_value = None  # not found
+
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_http.return_value = (mock_response, 201)
+
+        module = MagicMock()
+        rc, msg = npm_proxy.create_proxy_host(
+            module, "http://localhost:81/api", "token",
+            "le-site.example.com", "10.0.0.1", 443, True,
+            "admin@example.com"
+        )
+        assert rc == 1
+
+        # Verify meta with letsencrypt fields was sent
+        call_args = mock_http.call_args
+        data = json.loads(call_args.kwargs.get("data") or call_args[1].get("data"))
+        assert data["ssl_forced"] is True
+        assert data["certificate_id"] == "new"
+        assert data["meta"]["letsencrypt_email"] == "admin@example.com"
+        assert data["meta"]["letsencrypt_agree"] is True
+        assert data["meta"]["dns_challenge"] is False
 
     @patch("npm_proxy.http_request")
     @patch("npm_proxy.search_proxy_host")
@@ -283,7 +310,7 @@ class TestCreateProxyHost:
         module = MagicMock()
         rc, msg = npm_proxy.create_proxy_host(
             module, "http://localhost:81/api", "token",
-            "fail.example.com", "10.0.0.1", 80, False
+            "fail.example.com", "10.0.0.1", 80, False, ''
         )
         assert rc == 2
         assert "Failed" in msg

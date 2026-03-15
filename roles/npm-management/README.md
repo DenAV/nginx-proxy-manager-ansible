@@ -20,7 +20,7 @@ Change and update a [docker-compose.yml](https://github.com/DenAV/nginx-proxy-ma
 Role Variables
 --------------
 
-- `npm_api_url` - IP for the Nginx Proxy Manager REST API. Default to `http://localhost:81/api`.
+- `npm_api_url` - NPM REST API base URL. Default is `http://localhost:81/api`.
 - `npm_user` - User to authenticate the Nginx Proxy Manager REST API.
 - `npm_password` - Password to authenticate the Nginx Proxy Manager REST API.
 - `npm_access_token` - Tokens are required to authenticate against the API.
@@ -29,10 +29,34 @@ Role Variables
 - `npm_api_host` - Forward Hostname / IP are required to create the Proxy host.
 - `npm_api_host_port` - Forward Port. Default is `80`.
 - `npm_api_ssl_forced` - Is SSL Forced? Default is `false`.
+- `npm_api_letsencrypt_email` - Email for Let's Encrypt certificate requests. Default is `""` (empty).
 - `npm_api_state` - Whether to create (`present`) or remove (`absent`) a proxy host. Default is `present`.
 - `npm_api_hosts` - List of proxy hosts for batch operations. Default is `[]` (empty, use single host variables instead).
 
 See the [`defaults/main.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/roles/npm-management/defaults/main.yml) or [`vars/*.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/roles/npm-management/vars) file listing all possible options which you can be passed to a runner registration command.
+
+### Overriding Variables
+
+All variables in `defaults/main.yml` can be overridden via inventory, `group_vars`, `host_vars`, or `--extra-vars`:
+
+```ini
+# inventory
+[npm:vars]
+npm_api_url=http://10.0.0.5:81/api
+```
+
+```yaml
+# group_vars/npm.yml
+npm_api_url: http://10.0.0.5:81/api
+npm_api_ssl_forced: true
+npm_api_letsencrypt_email: admin@example.com
+```
+
+```bash
+# extra vars
+ansible-playbook pl_npm-management.yml \
+  --extra-vars "npm_api_url=http://10.0.0.5:81/api"
+```
 
 
 Dependencies
