@@ -1,0 +1,18 @@
+---
+codecov:
+  branch: develop
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        branches:
+          - main
+          - develop
+    patch:
+      default:
+        target: auto
+        branches:
+          - main
+          - develop
