@@ -24,8 +24,10 @@ Role Variables
 
 - `npm_api_domain_name` - Domain Names are required to create the Proxy host.
 - `npm_api_host` - Forward Hostname / IP are required to create the Proxy host.
-- `npm_api_ssl_forced` - Is SSL Forced? Default is `False`.
-- `npm_api_create_host` - Whether to create (present), or no a proxy host. Default is `False`.
+- `npm_api_host_port` - Forward Port. Default is `80`.
+- `npm_api_ssl_forced` - Is SSL Forced? Default is `false`.
+- `npm_api_state` - Whether to create (`present`) or remove (`absent`) a proxy host. Default is `present`.
+- `npm_api_hosts` - List of proxy hosts for batch operations. Default is `[]`.
 
 See the [`defaults/main.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/blob/main/roles/npm-management/defaults/main.yml) or [`vars/*.yml`](https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/roles/npm-management/vars) file listing all possible options which you can be passed to a runner registration command.
 
@@ -41,8 +43,44 @@ Example Playbook
     - role: npm-management
       npm_api_domain_name: "site-2.example.com"
       npm_api_host: "172.16.1.2"
-      npm_api_ssl_forced: True
-      npm_api_create_host: True
+      npm_api_ssl_forced: true
+      npm_api_state: present
+
+```
+
+### Delete a proxy host
+
+```yaml
+- name: NPM - delete proxy host
+  hosts: localhost
+  gather_facts: no
+
+  roles:
+    - role: npm-management
+      npm_api_domain_name: "site-2.example.com"
+      npm_api_host: "172.16.1.2"
+      npm_api_state: absent
+
+```
+
+### Batch operations
+
+```yaml
+- name: NPM - manage multiple proxy hosts
+  hosts: localhost
+  gather_facts: no
+
+  roles:
+    - role: npm-management
+      npm_api_hosts:
+        - domain_name: "site-a.example.com"
+          host: "172.16.1.10"
+          ssl_forced: true
+          state: present
+        - domain_name: "site-b.example.com"
+          host: "172.16.1.20"
+          host_port: 8080
+          state: present
 
 ```
 

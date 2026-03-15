@@ -19,51 +19,77 @@
     success_msg: NPM API credentials present.
   no_log: True
 
-# --- API Heath-Check-Endpunkt
-- name: NPM | API Heath-Check-Endpunkt
+# --- API Health-Check
+- name: NPM | API Health-Check
   uri:
-    url: "{{npm_api_check_url}}"
-    timeout: 1
+    url: "{{ npm_api_check_url }}"
+    timeout: 10
     return_content: yes
+    status_code: [200, 401]
   register: npm_api_check_result
-  changed_when: no
-  check_mode: no
-  failed_when: no
+  retries: 6
+  delay: 10
+  until: npm_api_check_result.status in [200, 401]
+  changed_when: false
+  check_mode: false
+  failed_when: false
   delegate_to: localhost
-  no_log: True
+  no_log: true
 
 # --- Get Access Token ---
 - name: NPM Post | Get Access Token
   uri:
-    url: '{{npm_api_url}}/tokens'
+    url: '{{ npm_api_url }}/tokens'
     method: POST
     validate_certs: no
     status_code: 200
     body_format: json
     body:
-      identity: "{{npm_user}}"
-      secret: "{{npm_password}}"
+      identity: "{{ npm_user }}"
+      secret: "{{ npm_password }}"
     headers:
       Content-Type: application/json
   register: npm_access_token
   delegate_to: localhost
-  no_log: True
+  no_log: true
   when:
     - npm_api_check_result.status == 200
 
-- name: Create Proxy-Host an NPM
+# --- Single host operation (backward-compatible) ---
+- name: NPM | Manage Proxy-Host (single)
   npm_proxy:
-    url: "{{npm_api_url}}"
-    token: "{{npm_access_token.json.token}}"
-    domain: "{{npm_api_domain_name}}"
-    host: "{{npm_api_host}}"
-    state: present
-    ssl_forced: "{{npm_api_ssl_forced}}"
+    url: "{{ npm_api_url }}"
+    token: "{{ npm_access_token.json.token }}"
+    domain: "{{ npm_api_domain_name }}"
+    host: "{{ npm_api_host }}"
+    host_port: "{{ npm_api_host_port | default(80) }}"
+    state: "{{ npm_api_state }}"
+    ssl_forced: "{{ npm_api_ssl_forced }}"
   delegate_to: localhost
   throttle: 1
-  no_log: True
+  no_log: true
   when:
     - npm_access_token
-    - npm_api_domain_name is defined
-    - npm_api_create_host == True
+    - npm_api_domain_name | default('') | length > 0
+    - npm_api_hosts | length == 0
+
+# --- Batch operations (loop over npm_api_hosts list) ---
+- name: NPM | Manage Proxy-Hosts (batch)
+  npm_proxy:
+    url: "{{ npm_api_url }}"
+    token: "{{ npm_access_token.json.token }}"
+    domain: "{{ item.domain_name }}"
+    host: "{{ item.host }}"
+    host_port: "{{ item.host_port | default(80) }}"
+    state: "{{ item.state | default(npm_api_state) }}"
+    ssl_forced: "{{ item.ssl_forced | default(npm_api_ssl_forced) }}"
+  delegate_to: localhost
+  throttle: 1
+  no_log: true
+  loop: "{{ npm_api_hosts }}"
+  loop_control:
+    label: "{{ item.domain_name }} ({{ item.state | default(npm_api_state) }})"
+  when:
+    - npm_access_token
+    - npm_api_hosts | length > 0
 
