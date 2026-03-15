@@ -1,6 +1,7 @@
 # Ansible Role — Nginx Proxy Manager
 
 [![CI — Lint & Unit Tests](https://github.com/DenAV/nginx-proxy-manager-ansible/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/DenAV/nginx-proxy-manager-ansible/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/DenAV/nginx-proxy-manager-ansible/graph/badge.svg)](https://codecov.io/gh/DenAV/nginx-proxy-manager-ansible)
 
 Ansible role and custom module for managing [Nginx Proxy Manager](https://nginxproxymanager.com/) proxy hosts via the REST API. Create, delete, and batch-manage reverse proxy entries with SSL (Let's Encrypt) — no UI interaction required.
 

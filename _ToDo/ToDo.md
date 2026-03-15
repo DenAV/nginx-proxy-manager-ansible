@@ -94,6 +94,7 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
 ## P2 — Improvements (long-term)
 
 - [ ] **Testing** — [#10](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/10)
+  - [x] Add code coverage with Codecov (pytest-cov, CI upload, badge)
   - [ ] Add Molecule tests for the role
   - [ ] Add unit tests for `npm_proxy.py` (module already has a TODO for this)
   - [ ] Add pre-commit hooks (ansible-lint, flake8, trailing whitespace)
