@@ -177,3 +177,12 @@ docker run --rm -p 8080:8080 \
 ```
 
 The spec includes a module coverage matrix showing which endpoints are currently supported by `npm_proxy.py`.
+
+Deployment Guide
+----------------
+
+For step-by-step cloud deployment instructions see the [Deployment Guide](https://github.com/DenAV/nginx-proxy-manager-ansible/wiki/Deployment-Guide) wiki page, covering:
+
+- **Hetzner Cloud** — CX22 VM + Docker CE (from EUR 3.49/month)
+- **Azure Container Instances** — serverless container (~USD 35/month)
+- Ansible inventory examples for both providers
