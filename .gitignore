@@ -1,6 +1,10 @@
-## Created by .ignore support plugin (hsz.mobi)
+# =============================================================================
+# .gitignore — nginx-proxy-manager-ansible
+# =============================================================================
 
-# ToDo files
+# --- Project-specific ---
+
+# ToDo (allow only tracking file)
 _ToDo/*
 !_ToDo/ToDo.md
 
@@ -11,7 +15,6 @@ logfile
 vmname.yml
 pl_vars/role_variable.*
 pl_vars/role_new-vm_win.*
-*.log
 pl_test*
 test*
 !tests/
@@ -20,107 +23,187 @@ test*
 # Secrets (Vault)
 **/api_secret.yml
 
-# User-Probe
-Probe/ **probe.py
-.vscode/
+# Probe / scratch files
+Probe/
+**probe.py
 
-# User-specific stuff:
+# --- IDE / Editor ---
+
+.vscode/
 .idea/
-### Python template
+.idea_modules/
+*.iws
+.idea/httpRequests
+atlassian-ide-plugin.xml
+
+# --- Python ---
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
 # C extensions
 *.so
+
 # Distribution / packaging
-.Python build/ develop-eggs/ dist/ downloads/ eggs/ .eggs/ lib/ lib64/ parts/ sdist/ var/ wheels/ *.egg-info/ 
-.installed.cfg *.egg MANIFEST
-# PyInstaller Usually these files are written by a python script from a template before PyInstaller builds the 
-#  exe, so as to inject date/other infos into it.
-*.manifest *.spec
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
 # Installer logs
-pip-log.txt pip-delete-this-directory.txt
+pip-log.txt
+pip-delete-this-directory.txt
+
 # Unit test / coverage reports
-htmlcov/ .tox/ .coverage .coverage.* .cache nosetests.xml coverage.xml *.cover .hypothesis/
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
 # Translations
-*.mo *.pot
-# Django stuff:
-*.log .static_storage/ .media/ local_settings.py
-# Flask stuff:
-instance/ .webassets-cache
-# Scrapy stuff:
+*.mo
+*.pot
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+.static_storage/
+.media/
+local_settings.py
+
+# Flask
+instance/
+.webassets-cache
+
+# Scrapy
 .scrapy
+
 # Sphinx documentation
 docs/_build/
+
 # PyBuilder
 target/
+
 # Jupyter Notebook
 .ipynb_checkpoints
+
 # pyenv
 .python-version
-# celery beat schedule file
+
+# Celery beat schedule
 celerybeat-schedule
-# SageMath parsed files
+
+# SageMath
 *.sage.py
-# Environments
-.env .venv env/ venv/ ENV/ env.bak/ venv.bak/
-# Spyder project settings
-.spyderproject .spyproject
-# Rope project settings
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
 .ropeproject
-# mkdocs documentation
+
+# mkdocs
 /site
+
 # mypy
 .mypy_cache/
-### Linux template
+
+# --- Linux ---
+
 *~
-# temporary files which can be created if a process still has a handle open of a deleted file
 .fuse_hidden*
-# KDE directory preferences
 .directory
-# Linux trash folder which might appear on any partition or disk
 .Trash-*
-# .nfs files are created when an open file is removed but is still being accessed
 .nfs*
-### macOS template
-# General
-.DS_Store .AppleDouble .LSOverride
-# Icon must end with two \r
+
+# --- macOS ---
+
+.DS_Store
+.AppleDouble
+.LSOverride
 Icon
-# Thumbnails
 ._*
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100 .fseventsd .Spotlight-V100 .TemporaryItems .Trashes .VolumeIcon.icns 
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
 .com.apple.timemachine.donotpresent
-# Directories potentially created on remote AFP share
-.AppleDB .AppleDesktop Network Trash Folder Temporary Items .apdisk
-### Windows template
-# Windows thumbnail cache files
-Thumbs.db ehthumbs.db ehthumbs_vista.db
-# Dump file
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# --- Windows ---
+
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
 *.stackdump
-# Folder config file
 [Dd]esktop.ini
-# Recycle Bin used on file shares
 $RECYCLE.BIN/
-# Windows Installer files
-*.cab *.msi *.msix *.msm *.msp
-# Windows shortcuts
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
 *.lnk
-### VirtualEnv template
-[Bb]in [Ii]nclude [Ll]ib [Ll]ib64 [Ll]ocal [Ss]cripts pyvenv.cfg pip-selfcheck.json
-# CMake
-cmake-build-debug/ cmake-build-release/
-# File-based project format
-*.iws
-# IntelliJ
+
+# --- VirtualEnv ---
+
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
+pip-selfcheck.json
+
+# --- Build tools ---
+
+cmake-build-debug/
+cmake-build-release/
 out/
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-# JIRA plugin
-atlassian-ide-plugin.xml
-# Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml crashlytics.properties crashlytics-build.properties fabric.properties
-# Editor-based Rest Client
-.idea/httpRequests
+
+# Crashlytics (Android Studio / IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
