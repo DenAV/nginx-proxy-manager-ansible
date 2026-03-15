@@ -17,7 +17,7 @@ Change and update a [docker-compose.yml](https://github.com/DenAV/nginx-proxy-ma
 Role Variables
 --------------
 
-- `npm_api_url` - IP for the Nginx Proxy Manager REST API. Default to `http://192.168.1.5:81/api`.
+- `npm_api_url` - IP for the Nginx Proxy Manager REST API. Default to `http://localhost:81/api`.
 - `npm_user` - User to authenticate the Nginx Proxy Manager REST API.
 - `npm_password` - Password to authenticate the Nginx Proxy Manager REST API.
 - `npm_access_token` - Tokens are required to authenticate against the API.

@@ -5,40 +5,35 @@
 - [Docker Install documentation](https://docs.docker.com/install/)
 - [Docker Compose documentation](https://docs.docker.com/compose/)
 
-2. Create an `.env` file to parameterize image tag and email.
+2. Create an `.env` file to parameterize the image tag.
 
 - Copy the example and edit values:
 
 ```bash
 cd docker
-copy .env.example .env  # or: cp .env.example .env
+cp .env.example .env
 ```
 
 - `.env` contents (example):
 
 ```
-IMAGE_TAG=2.10.3
-LE_MAIL=npm-admin@example.com
+IMAGE_TAG=2.11.3
 ```
 
-- `docker-compose_npm.yml` uses these variables:
+- `docker-compose_npm.yml` uses this variable:
 
 ```yml
-version: '3.8'
 services:
   app:
-    image: 'jc21/nginx-proxy-manager:${IMAGE_TAG:-2.10.3}'
+    image: 'jc21/nginx-proxy-manager:${IMAGE_TAG:-2.11.3}'
     restart: unless-stopped
     ports:
       - '80:80'
       - '81:81'
       - '443:443'
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
-      - ${PWD}/internal/certificate.js:/app/internal/certificate.js
-    environment:
-      LE_MAIL: "${LE_MAIL:-npm-admin@example.com}"
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
 ```
 
 3. Bring up your stack by running (from the `docker` directory)
