@@ -1,6 +1,6 @@
 # TODO — nginx-proxy-manager-ansible
 
-> Last updated: 2026-02-23
+> Last updated: 2026-03-15
 
 ## Branching & testing strategy
 
@@ -53,24 +53,24 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [x] Remove outdated `.travis.yml` (Python 2.7, `sudo: false`)
   - [x] Add `.github/workflows/integration.yml` (Molecule on PR to main)
 
-- [ ] **Ansible Role: functionality** — [#7](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/7)
-  - [ ] Add task for `state: absent` (delete proxy host) in `tasks/main.yml`
-  - [ ] Remove redundant `npm_api_create_host` flag — use `state: present/absent` instead
-  - [ ] Add batch operations support (loop over a list of hosts from a YAML file)
-  - [ ] Increase `timeout: 1` → `timeout: 10` in health-check task
-  - [ ] Add `retries`/`delay`/`until` to health-check task
+- [x] **Ansible Role: functionality** — [#7](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/7) (CLOSED, PR #26)
+  - [x] Add task for `state: absent` (delete proxy host) in `tasks/main.yml`
+  - [x] Remove redundant `npm_api_create_host` flag — use `state: present/absent` instead
+  - [x] Add batch operations support (loop over a list of hosts from a YAML file)
+  - [x] Increase `timeout: 1` → `timeout: 10` in health-check task
+  - [x] Add `retries`/`delay`/`until` to health-check task
 
-- [ ] **Configuration** — [#8](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/8)
-  - [ ] Move `npm_api_url` from `vars/main.yml` to `defaults/main.yml` (remove hardcoded IP `192.168.1.5`)
-  - [ ] Document overriding via inventory/group_vars/extra_vars
+- [x] **Configuration** — [#8](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/8) (CLOSED, PR #28)
+  - [x] Move `npm_api_url` from `vars/main.yml` to `defaults/main.yml` (remove hardcoded IP `192.168.1.5`)
+  - [x] Document overriding via inventory/group_vars/extra_vars
 
-- [ ] **Docker Compose** — [#9](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/9)
-  - [ ] Remove deprecated `version: '3.8'`
-  - [ ] Add custom network for isolation
-  - [ ] Add resource limits (`deploy.resources.limits`)
-  - [ ] Add logging configuration
-  - [ ] Remove `certificate.js` override and `${PWD}/internal/` volume mount (see below)
-  - [ ] Remove `LE_MAIL` environment variable from docker-compose
+- [x] **Docker Compose** — [#9](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/9) (CLOSED, PR #27)
+  - [x] Remove deprecated `version: '3.8'`
+  - [x] Add custom network for isolation
+  - [x] Add resource limits (`deploy.resources.limits`)
+  - [x] Add logging configuration
+  - [x] Remove `certificate.js` override and `${PWD}/internal/` volume mount (see below)
+  - [x] Remove `LE_MAIL` environment variable from docker-compose
 
 - [ ] **Swagger UI service in docker-compose** — [#21](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/21)
   - [ ] Add `swagger-ui` service to `docker/docker-compose_npm.yml`
@@ -82,12 +82,12 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [ ] Azure ACI: `az` CLI commands, storage mount, YAML deployment file
   - [ ] Comparison table, Ansible inventory examples
 
-- [ ] **Add `letsencrypt_email` to `npm_proxy.py` (replaces certificate.js hack)** — [#15](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/15)
-  - [ ] Add `letsencrypt_email` parameter to module `argument_spec`
-  - [ ] Pass `meta: {letsencrypt_email, letsencrypt_agree: true}` in create-host API request when `ssl_forced=True`
-  - [ ] Add `npm_api_letsencrypt_email` variable to role defaults
-  - [ ] Delete `docker/internal/certificate.js` (1235-line full-file override is no longer needed)
-  - [ ] Update docker-compose: remove `${PWD}/internal/certificate.js` volume mount and `LE_MAIL` env var
+- [x] **Add `letsencrypt_email` to `npm_proxy.py` (replaces certificate.js hack)** — [#15](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/15) (CLOSED, PR #28)
+  - [x] Add `letsencrypt_email` parameter to module `argument_spec`
+  - [x] Pass `meta: {letsencrypt_email, letsencrypt_agree: true}` in create-host API request when `ssl_forced=True`
+  - [x] Add `npm_api_letsencrypt_email` variable to role defaults
+  - [x] Delete `docker/internal/certificate.js` (1235-line full-file override is no longer needed)
+  - [x] Update docker-compose: remove `${PWD}/internal/certificate.js` volume mount and `LE_MAIL` env var
 
 ---
 

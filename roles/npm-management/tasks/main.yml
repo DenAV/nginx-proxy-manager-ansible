@@ -65,6 +65,7 @@
     host_port: "{{ npm_api_host_port | default(80) }}"
     state: "{{ npm_api_state }}"
     ssl_forced: "{{ npm_api_ssl_forced }}"
+    letsencrypt_email: "{{ npm_api_letsencrypt_email | default('') }}"
   delegate_to: localhost
   throttle: 1
   no_log: true
@@ -83,6 +84,7 @@
     host_port: "{{ item.host_port | default(80) }}"
     state: "{{ item.state | default(npm_api_state) }}"
     ssl_forced: "{{ item.ssl_forced | default(npm_api_ssl_forced) }}"
+    letsencrypt_email: "{{ item.letsencrypt_email | default(npm_api_letsencrypt_email) | default('') }}"
   delegate_to: localhost
   throttle: 1
   no_log: true

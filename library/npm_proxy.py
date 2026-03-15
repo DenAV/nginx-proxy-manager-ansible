@@ -42,6 +42,13 @@ options:
         required: false
         default: true
         type: bool
+    letsencrypt_email:
+        description: >
+            Email address for Let's Encrypt certificate requests.
+            Required when ssl_forced is true and certificate_id is "new".
+        required: false
+        default: ''
+        type: str
     state:
         description: Whether to create (present), or remove (absent) a proxy host.
         required: false
@@ -59,6 +66,17 @@ EXAMPLES = r'''
     domain: "domain_name.example.com"
     host: "172.32.0.1"
     ssl_forced: True
+    state: present
+
+# create new proxy host with Let's Encrypt
+- name: Create Proxy-Host an NPM with SSL
+  npm_proxy:
+    url: "http://192.168.0.1:81/api"
+    token: "npm_access_token"
+    domain: "domain_name.example.com"
+    host: "172.32.0.1"
+    ssl_forced: True
+    letsencrypt_email: "admin@example.com"
     state: present
 
 # delete proxy host
@@ -155,7 +173,9 @@ def search_proxy_host(module, api_url, token, domain_name):
 
 
 # Create new Proxy-host
-def create_proxy_host(module, api_url, token, domain_name, forward_host, forward_port, ssl_forced):
+def create_proxy_host(module, api_url, token, domain_name,
+                      forward_host, forward_port, ssl_forced,
+                      letsencrypt_email=''):
 
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
@@ -167,7 +187,7 @@ def create_proxy_host(module, api_url, token, domain_name, forward_host, forward
         forward_scheme = "http"
 
         if ssl_forced:
-            data_request = json.dumps({
+            data = {
                 "domain_names": [domain_name],
                 "forward_host": forward_host,
                 "forward_port": forward_port,
@@ -175,7 +195,14 @@ def create_proxy_host(module, api_url, token, domain_name, forward_host, forward
                 "certificate_id": "new",
                 "ssl_forced": ssl_forced,
                 "allow_websocket_upgrade": True,
-            })
+            }
+            if letsencrypt_email:
+                data["meta"] = {
+                    "letsencrypt_email": letsencrypt_email,
+                    "letsencrypt_agree": True,
+                    "dns_challenge": False,
+                }
+            data_request = json.dumps(data)
         else:
             data_request = json.dumps({
                 "domain_names": [domain_name],
@@ -285,6 +312,7 @@ def main():
             host=dict(type='str', required=True),
             host_port=dict(type='int', required=False, default=80),
             ssl_forced=dict(type='bool', required=False, default=True),
+            letsencrypt_email=dict(type='str', required=False, default='', no_log=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
     )
@@ -295,10 +323,14 @@ def main():
     forward_host = module.params['host']
     forward_port = module.params['host_port']
     ssl_forced = module.params['ssl_forced']
+    letsencrypt_email = module.params['letsencrypt_email']
     state = module.params['state']
 
     if state == 'present':
-        (rc, result) = create_proxy_host(module, api_url, token, domain_name, forward_host, forward_port, ssl_forced)
+        (rc, result) = create_proxy_host(
+            module, api_url, token, domain_name,
+            forward_host, forward_port, ssl_forced, letsencrypt_email
+        )
     elif state == 'absent':
         (rc, result) = delete_proxy_host(module, api_url, token, domain_name)
 

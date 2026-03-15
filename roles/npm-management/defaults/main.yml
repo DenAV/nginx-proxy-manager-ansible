@@ -8,6 +8,7 @@ npm_api_check_url: "{{ npm_api_url }}"
 # Single host management
 npm_api_state: present
 npm_api_ssl_forced: false
+npm_api_letsencrypt_email: ""
 npm_api_domain_name: ""
 npm_api_host: ""
 npm_api_host_port: 80
