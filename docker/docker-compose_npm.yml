@@ -31,6 +31,24 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  swagger-ui:
+    image: swaggerapi/swagger-ui:v5.21.0
+    container_name: npm-swagger-ui
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      API_URL: http://app:81/api/schema
+    depends_on:
+      - app
+    networks:
+      - npm
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
 networks:
   npm:
     name: npm

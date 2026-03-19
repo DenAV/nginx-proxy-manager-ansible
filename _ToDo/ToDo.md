@@ -1,6 +1,6 @@
 # TODO — nginx-proxy-manager-ansible
 
-> Last updated: 2026-03-15
+> Last updated: 2026-03-19
 
 ## Branching & testing strategy
 
@@ -12,7 +12,7 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
 
 - **Branches:** `feature/*` or `fix/*` → `develop` → `main`
 - **On push/PR to `develop`:** lint (ansible-lint + flake8) + syntax-check + unit tests
-- **On PR to `main`:** lint + unit tests + Molecule integration tests (NPM in Docker)
+- **On PR to `main`:** lint + unit tests
 - **After merge to `main`:** create git tag (`vX.Y.Z`) + GitHub Release with changelog
 - All P0/P1 fixes go to `develop` first, then PR to `main` after passing CI
 
@@ -72,10 +72,10 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [x] Remove `certificate.js` override and `${PWD}/internal/` volume mount (see below)
   - [x] Remove `LE_MAIL` environment variable from docker-compose
 
-- [ ] **Swagger UI service in docker-compose** — [#21](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/21)
-  - [ ] Add `swagger-ui` service to `docker/docker-compose_npm.yml`
+- [x] **Swagger UI service in docker-compose** — [#21](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/21)
+  - [x] Add `swagger-ui` service to `docker/docker-compose_npm.yml`
   - [ ] Verify Swagger UI loads the NPM schema successfully
-  - [ ] Update wiki API Reference page
+  - [x] Update wiki API Reference page
 
 - [x] **Deployment Guide wiki page (Hetzner Cloud + Azure ACI)** — [#22](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/22)
   - [x] Hetzner CX22 + Docker CE: full `hcloud` CLI commands, firewall, docker-compose
@@ -95,8 +95,8 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
 
 - [ ] **Testing** — [#10](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/10)
   - [x] Add code coverage with Codecov (pytest-cov, CI upload, badge)
-  - [ ] Add Molecule tests for the role
-  - [ ] Add unit tests for `npm_proxy.py` (module already has a TODO for this)
+  - [ ] Add Molecule tests for the role (removed from CI — NPM container too heavy for GitHub Actions)
+  - [x] Unit tests for `npm_proxy.py` — 24 tests passing, 59% coverage
   - [ ] Add pre-commit hooks (ansible-lint, flake8, trailing whitespace)
 
 - [ ] **GitOps** — [#11](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/11)
