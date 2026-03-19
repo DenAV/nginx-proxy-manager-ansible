@@ -1,0 +1,33 @@
+---
+name: Molecule — Integration Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  molecule:
+    name: Molecule Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          ansible-galaxy collection install community.docker ansible.posix
+
+      - name: Run Molecule test
+        run: molecule test
+        env:
+          ANSIBLE_FORCE_COLOR: "true"
+          PY_COLORS: "1"
