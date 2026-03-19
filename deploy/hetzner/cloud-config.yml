@@ -1,0 +1,58 @@
+#cloud-config
+#
+# Cloud-config for NPM server on Hetzner Cloud.
+# Automates initial server hardening on first boot.
+#
+# Usage:
+#   Hetzner UI: paste into Cloud config field when creating a server
+#   CLI: hcloud server create ... --user-data-from-file cloud-config.yml
+#
+# After boot:
+#   - SSH port: 2222 (not 22)
+#   - User: deploy (with sudo, no root login)
+#   - UFW and fail2ban are active
+#
+# See: https://community.hetzner.com/tutorials/basic-cloud-config
+
+users:
+  - name: deploy
+    groups: users, admin, docker
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - <your-public-ssh-key>
+
+packages:
+  - fail2ban
+  - ufw
+
+package_update: true
+package_upgrade: true
+
+runcmd:
+  # fail2ban — protect SSH from brute force
+  - printf "[sshd]\nenabled = true\nbanaction = iptables-multiport" > /etc/fail2ban/jail.local
+  - systemctl enable fail2ban
+
+  # UFW — allow only required ports
+  - ufw allow 2222/tcp   # SSH (custom port)
+  - ufw allow 80/tcp     # HTTP
+  - ufw allow 443/tcp    # HTTPS
+  - ufw allow 81/tcp     # NPM Admin UI (restrict later)
+  - ufw --force enable
+
+  # SSH hardening
+  - sed -i -e '/^\(#\|\)PermitRootLogin/s/^.*$/PermitRootLogin no/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)PasswordAuthentication/s/^.*$/PasswordAuthentication no/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)Port/s/^.*$/Port 2222/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)KbdInteractiveAuthentication/s/^.*$/KbdInteractiveAuthentication no/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)ChallengeResponseAuthentication/s/^.*$/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)MaxAuthTries/s/^.*$/MaxAuthTries 2/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)AllowTcpForwarding/s/^.*$/AllowTcpForwarding no/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)X11Forwarding/s/^.*$/X11Forwarding no/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)AllowAgentForwarding/s/^.*$/AllowAgentForwarding no/' /etc/ssh/sshd_config
+  - sed -i -e '/^\(#\|\)AuthorizedKeysFile/s/^.*$/AuthorizedKeysFile .ssh\/authorized_keys/' /etc/ssh/sshd_config
+  - sed -i '$a AllowUsers deploy' /etc/ssh/sshd_config
+
+  # Reboot to apply all changes
+  - reboot
