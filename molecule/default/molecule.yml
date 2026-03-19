@@ -5,6 +5,10 @@ driver:
 platforms:
   - name: npm-test
     image: jc21/nginx-proxy-manager:2.11.3
+    docker_networks:
+      - name: molecule-npm
+    networks:
+      - name: molecule-npm
     published_ports:
       - "0.0.0.0:3080:80"
       - "0.0.0.0:3081:81"
@@ -15,6 +19,17 @@ platforms:
     volumes:
       - /tmp/npm-data:/data
       - /tmp/npm-letsencrypt:/etc/letsencrypt
+
+  - name: swagger-ui-test
+    image: swaggerapi/swagger-ui:v5.21.0
+    networks:
+      - name: molecule-npm
+    published_ports:
+      - "0.0.0.0:8080:8080"
+    pre_build_image: true
+    override_command: false
+    env:
+      API_URL: "http://npm-test:81/api/schema"
 
 provisioner:
   name: ansible

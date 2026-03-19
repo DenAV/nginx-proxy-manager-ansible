@@ -1,0 +1,25 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.2
+    hooks:
+      - id: flake8
+        files: ^library/
+        args: ['--max-line-length=120']
+
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v25.3.1
+    hooks:
+      - id: ansible-lint
+        files: \.(yml|yaml)$
+        exclude: ^(molecule/|docker/|deploy/|docs/)

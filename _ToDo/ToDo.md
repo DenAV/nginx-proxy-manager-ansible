@@ -1,20 +1,21 @@
 # TODO — nginx-proxy-manager-ansible
 
-> Last updated: 2026-03-15
+> Last updated: 2026-03-19
 
 ## Branching & testing strategy
 
 ```
 feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
                       ↑           ↑
-                  lint + unit   lint + unit + molecule
+                  lint + unit   lint + unit
 ```
 
 - **Branches:** `feature/*` or `fix/*` → `develop` → `main`
 - **On push/PR to `develop`:** lint (ansible-lint + flake8) + syntax-check + unit tests
-- **On PR to `main`:** lint + unit tests + Molecule integration tests (NPM in Docker)
+- **On PR to `main`:** lint + unit tests
 - **After merge to `main`:** create git tag (`vX.Y.Z`) + GitHub Release with changelog
 - All P0/P1 fixes go to `develop` first, then PR to `main` after passing CI
+- Molecule integration tests are for local use only (NPM container too heavy for GitHub Actions)
 
 ---
 
@@ -51,7 +52,7 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [x] Create workflow `.github/workflows/ci.yml` (ansible-lint + flake8 + pytest)
   - [x] Add playbook syntax-check to CI
   - [x] Remove outdated `.travis.yml` (Python 2.7, `sudo: false`)
-  - [x] Add `.github/workflows/integration.yml` (Molecule on PR to main)
+  - [x] ~~Add `.github/workflows/integration.yml` (Molecule on PR to main)~~ — removed, NPM container too heavy for CI
 
 - [x] **Ansible Role: functionality** — [#7](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/7) (CLOSED, PR #26)
   - [x] Add task for `state: absent` (delete proxy host) in `tasks/main.yml`
@@ -72,12 +73,12 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [x] Remove `certificate.js` override and `${PWD}/internal/` volume mount (see below)
   - [x] Remove `LE_MAIL` environment variable from docker-compose
 
-- [ ] **Swagger UI service in docker-compose** — [#21](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/21)
-  - [ ] Add `swagger-ui` service to `docker/docker-compose_npm.yml`
-  - [ ] Verify Swagger UI loads the NPM schema successfully
-  - [ ] Update wiki API Reference page
+- [ ] **Swagger UI service in docker-compose** — [#21](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/21) (PR #38)
+  - [x] Add `swagger-ui` service to `docker/docker-compose_npm.yml`
+  - [ ] Verify Swagger UI loads the NPM schema successfully (needs live test)
+  - [x] Update wiki API Reference page
 
-- [x] **Deployment Guide wiki page (Hetzner Cloud + Azure ACI)** — [#22](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/22)
+- [x] **Deployment Guide wiki page (Hetzner Cloud + Azure ACI)** — [#22](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/22) (CLOSED)
   - [x] Hetzner CX22 + Docker CE: full `hcloud` CLI commands, firewall, docker-compose
   - [x] Azure ACI: `az` CLI commands, storage mount, YAML deployment file
   - [x] Comparison table, Ansible inventory examples
@@ -89,15 +90,21 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [x] Delete `docker/internal/certificate.js` (1235-line full-file override is no longer needed)
   - [x] Update docker-compose: remove `${PWD}/internal/certificate.js` volume mount and `LE_MAIL` env var
 
+- [x] **Module timeout and batch split** — [#35](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/35) (CLOSED, PR #36)
+  - [x] Increase module timeout: 30s default, 120s for SSL operations
+  - [x] Split batch tasks: non-SSL parallel, SSL sequential (`throttle: 1`)
+  - [x] Rename `api_secret.yml.example` → `api_secret.example` (prevent `include_vars` conflict)
+  - [x] Improve error messages: include HTTP status code and response body
+
 ---
 
 ## P2 — Improvements (long-term)
 
 - [ ] **Testing** — [#10](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/10)
   - [x] Add code coverage with Codecov (pytest-cov, CI upload, badge)
-  - [ ] Add Molecule tests for the role
-  - [ ] Add unit tests for `npm_proxy.py` (module already has a TODO for this)
-  - [ ] Add pre-commit hooks (ansible-lint, flake8, trailing whitespace)
+  - [ ] Add Molecule tests for the role (removed from CI — NPM container too heavy for GitHub Actions)
+  - [x] Unit tests for `npm_proxy.py` — 24 tests passing, 59% coverage
+  - [x] Add pre-commit hooks (ansible-lint, flake8, trailing whitespace)
 
 - [ ] **GitOps** — [#11](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/11)
   - [ ] Declarative state: `proxy_hosts.yml` file with a list of hosts, role converges to it
@@ -107,7 +114,7 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
 
 - [x] **Swagger UI Docker setup for live NPM API** — [#20](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/20) (CLOSED, PR #19)
 
-- [x] **Documentation** — [#12](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/12)
+- [x] **Documentation** — [#12](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/12) (CLOSED, PR #32)
   - [x] Add `state: absent` example to README
   - [x] Add `host_port` usage example
   - [x] Add inventory example (host groups, group_vars)
@@ -119,10 +126,10 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
 - [ ] **Packaging & structure** — [#13](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/13)
   - [ ] Convert to Ansible Collection
   - [ ] Replace `requests` with `fetch_url` (native Ansible, no external dependencies)
-  - [ ] Add `Makefile` with `lint`, `test`, `deploy` targets
-  - [ ] Add `.editorconfig`, `CHANGELOG.md`, `CONTRIBUTING.md`
-  - [ ] Add GitHub Issues/PR templates (`.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md`)
-  - [ ] Add `CODEOWNERS`
+  - [x] Add `Makefile` with `lint`, `test`, `deploy` targets
+  - [x] Add `.editorconfig`, `CHANGELOG.md`
+  - [x] Add GitHub Issues/PR templates (`.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md`)
+  - [x] Add `CODEOWNERS`
   - [ ] Add Dependabot / Renovate for Docker image tags
 
 - [x] **`.gitignore`** — [#14](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/14) (CLOSED, PR #29)
