@@ -1,0 +1,32 @@
+---
+# Molecule verify playbook — confirms the proxy host was created
+- name: Verify proxy host exists in NPM
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get NPM API token
+      uri:
+        url: "{{ npm_api_url }}/tokens"
+        method: POST
+        body_format: json
+        body:
+          identity: "{{ npm_user }}"
+          secret: "{{ npm_password }}"
+        status_code: 200
+      register: token_result
+
+    - name: Query proxy hosts
+      uri:
+        url: "{{ npm_api_url }}/nginx/proxy-hosts"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ token_result.json.token }}"
+        status_code: 200
+      register: proxy_hosts
+
+    - name: Assert test proxy host exists
+      assert:
+        that:
+          - proxy_hosts.json | selectattr('domain_names', 'contains', 'molecule-test.example.com') | list | length > 0
+        fail_msg: "Proxy host 'molecule-test.example.com' was not found in NPM"
+        success_msg: "Proxy host 'molecule-test.example.com' verified successfully"

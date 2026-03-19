@@ -1,0 +1,89 @@
+---
+name: CI — Lint & Unit Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run ansible-lint
+        run: ansible-lint .
+
+      - name: Run flake8
+        run: flake8 library/
+
+  syntax-check:
+    name: Playbook Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install Ansible
+        run: pip install ansible-core>=2.14
+
+      - name: Syntax check
+        run: ansible-playbook pl_npm-management.yml --syntax-check
+        env:
+          ANSIBLE_ROLES_PATH: ./roles
+          ANSIBLE_LIBRARY: ./library
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run unit tests with coverage
+        run: pytest tests/ -v --tb=short --cov=library --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          flags: unittests
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

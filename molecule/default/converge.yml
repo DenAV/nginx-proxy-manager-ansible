@@ -1,0 +1,26 @@
+---
+# Molecule converge playbook — creates a test proxy host via the role
+- name: Wait for NPM to be ready
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Wait for NPM API to respond
+      uri:
+        url: "{{ npm_api_url }}"
+        method: GET
+        status_code: [200, 401]
+        timeout: 5
+      register: npm_health
+      retries: 30
+      delay: 5
+      until: npm_health.status in [200, 401]
+
+- name: NPM — create test proxy host
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - role: npm-management
+      npm_api_domain_name: "molecule-test.example.com"
+      npm_api_host: "127.0.0.1"
+      npm_api_ssl_forced: false
+      npm_api_state: present

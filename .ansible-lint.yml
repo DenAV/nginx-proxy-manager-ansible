@@ -1,0 +1,13 @@
+---
+# ansible-lint configuration
+exclude_paths:
+  - .git/
+  - venv/
+  - .venv/
+  - __pycache__/
+  - docker/data/
+  - docker/letsencrypt/
+  - roles/npm-management/vars/api_secret.yml
+skip_list:
+  - experimental
+verbosity: 1

@@ -33,7 +33,7 @@ options:
         required: true
         type: str
     host_port:
-        description: Forward Port 
+        description: Forward Port
         required: false
         default: 80
         type: int
@@ -42,11 +42,20 @@ options:
         required: false
         default: true
         type: bool
+    letsencrypt_email:
+        description: >
+            Email address for Let's Encrypt certificate requests.
+            Required when ssl_forced is true and certificate_id is "new".
+        required: false
+        default: ''
+        type: str
     state:
         description: Whether to create (present), or remove (absent) a proxy host.
         required: false
         type: str
-        choices=['absent', 'present']
+        choices:
+          - absent
+          - present
 '''
 EXAMPLES = r'''
 # create new proxy host
@@ -57,6 +66,17 @@ EXAMPLES = r'''
     domain: "domain_name.example.com"
     host: "172.32.0.1"
     ssl_forced: True
+    state: present
+
+# create new proxy host with Let's Encrypt
+- name: Create Proxy-Host an NPM with SSL
+  npm_proxy:
+    url: "http://192.168.0.1:81/api"
+    token: "npm_access_token"
+    domain: "domain_name.example.com"
+    host: "172.32.0.1"
+    ssl_forced: True
+    letsencrypt_email: "admin@example.com"
     state: present
 
 # delete proxy host
@@ -84,71 +104,90 @@ import requests
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
 
+
+# Build URL for HTTP request
 def build_url(api_url, action, item_id=None):
     if action == "create-host":
         return "%s/nginx/proxy-hosts" % api_url, "POST"
     elif action == "search-host":
         return "%s/nginx/proxy-hosts" % api_url, "GET"
     elif action == "delete-host":
-        return  "%s/nginx/proxy-hosts/%s" % (api_url, item_id), "DELETE"
+        return "%s/nginx/proxy-hosts/%s" % (api_url, item_id), "DELETE"
     elif action == "create-ssl":
         return "%s/nginx/certificates" % api_url, "POST"
     elif action == "search-ssl":
         return "%s/nginx/certificates" % api_url, "GET"
     elif action == "delete-ssl":
-        return  "%s/nginx/certificates/%s" % (api_url, item_id), "DELETE"
+        return "%s/nginx/certificates/%s" % (api_url, item_id), "DELETE"
+    else:
+        raise ValueError("Unknown action: %s" % action)
 
-def http_request(api_url, token, action, data=None, item_id=None):
-    
+
+# Execution of the HTTP request
+def http_request(api_url, token, action, data=None, item_id=None, timeout=30):
+
     if item_id is None:
         url, method = build_url(api_url, action)
     else:
         url, method = build_url(api_url, action, item_id)
-    
+
     headers = dict()
     headers["Authorization"] = "Bearer %s" % token
     headers["Content-Type"] = "application/json"
 
-    if method == "GET":
-        response =  requests.get(url=url, data=data, headers=headers)
-    elif method == "POST":
-        response =  requests.post(url=url, data=data, headers=headers)
-    elif method == "DELETE":
-        response =  requests.delete(url=url, data=data, headers=headers)
+    try:
+        if method == "GET":
+            response = requests.get(url=url, data=data, headers=headers, timeout=timeout)
+        elif method == "POST":
+            response = requests.post(url=url, data=data, headers=headers, timeout=timeout)
+        elif method == "DELETE":
+            response = requests.delete(url=url, data=data, headers=headers, timeout=timeout)
+    except requests.exceptions.ConnectionError as e:
+        raise requests.exceptions.ConnectionError(
+            "Failed to connect to %s: %s" % (url, e)
+        )
+    except requests.exceptions.Timeout as e:
+        raise requests.exceptions.Timeout(
+            "Request to %s timed out after %ds: %s" % (url, timeout, e)
+        )
 
     return response, response.status_code
 
+
+# Search Proxy-host, exists or not
 def search_proxy_host(module, api_url, token, domain_name):
     response, info = http_request(api_url, token, action="search-host")
-    
+
     status_code = info
     if status_code >= 400:
-        module.fail_json("Failed to connect to api host to search for proxy_host. Info: %s" % response)
+        module.fail_json(msg="Failed to connect to api host to search for proxy_host. Info: %s" % response)
 
-    result_search = ""
+    result_search = None
     for search in json.loads(response.text):
         if domain_name in search["domain_names"]:
             result_search = search
-    
+
     # Return proxy_host
     return result_search
 
-def create_proxy_host(module, api_url, token, domain_name, forward_host, forward_port, ssl_forced):
-    # Create Proxy-host
-    
+
+# Create new Proxy-host
+def create_proxy_host(module, api_url, token, domain_name,
+                      forward_host, forward_port, ssl_forced,
+                      letsencrypt_email=''):
+
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
-    if len(proxy_host) > 0:
+    if proxy_host:
         # If the Proxy-host already exists, do nothing
         return 0, "Proxy Host %s already exists" % domain_name
-        
+
     else:
         forward_scheme = "http"
 
         if ssl_forced:
-            data_request = json.dumps({
+            data = {
                 "domain_names": [domain_name],
                 "forward_host": forward_host,
                 "forward_port": forward_port,
@@ -156,7 +195,14 @@ def create_proxy_host(module, api_url, token, domain_name, forward_host, forward
                 "certificate_id": "new",
                 "ssl_forced": ssl_forced,
                 "allow_websocket_upgrade": True,
-            })
+            }
+            if letsencrypt_email:
+                data["meta"] = {
+                    "letsencrypt_email": letsencrypt_email,
+                    "letsencrypt_agree": True,
+                    "dns_challenge": False,
+                }
+            data_request = json.dumps(data)
         else:
             data_request = json.dumps({
                 "domain_names": [domain_name],
@@ -165,31 +211,41 @@ def create_proxy_host(module, api_url, token, domain_name, forward_host, forward
                 "forward_scheme": forward_scheme,
             })
 
-        response, info = http_request(api_url, token, data=data_request, action="create-host")
+        response, info = http_request(
+            api_url, token, data=data_request,
+            action="create-host",
+            timeout=120 if ssl_forced else 30
+        )
 
         status_code = info
         if status_code == 201:
             return 1, "Proxy-host %s created" % domain_name
 
         elif status_code >= 400:
-            return 2, "Failed to connect to api host to create for proxy_host. Info: %s" % response
+            try:
+                error_detail = response.json()
+            except Exception:
+                error_detail = response.text
+            return 2, "Failed to create proxy_host %s (HTTP %d): %s" % (
+                domain_name, status_code, error_detail)
 
+
+# Delete Proxy-host
 def delete_proxy_host(module, api_url, token, domain_name):
-    # Delete Proxy-host
-   
+
     proxy_host = search_proxy_host(module, api_url, token, domain_name)
 
-    if len(proxy_host) > 0:
+    if proxy_host:
         # If the Proxy-host already exists, do remove
         if proxy_host['certificate_id'] > 0:
             # IF the Proxy-host have certificate
             rc, result = delete_certificate(module, api_url, token, item_id=proxy_host['certificate_id'])
-            
+
             if rc == 0 or rc == 1:
                 response, status_code = http_request(api_url, token, item_id=proxy_host['id'], action="delete-host")
 
                 if status_code == 200:
-                    return 1, "Proxy-host and certificate: %s remowed." % domain_name
+                    return 1, "Proxy-host and certificate: %s removed." % domain_name
 
                 elif status_code >= 400:
                     return 2, "Failed to delete for Proxy-host and certificate: %s. Info: %s" % (domain_name, response)
@@ -200,27 +256,29 @@ def delete_proxy_host(module, api_url, token, domain_name):
             response, status_code = http_request(api_url, token, item_id=proxy_host['id'], action="delete-host")
 
             if status_code == 200:
-                return 1, "Proxy-host: %s remowed." % domain_name
+                return 1, "Proxy-host: %s removed." % domain_name
 
             elif status_code >= 400:
                 return 2, "Failed to delete for Proxy-host: %s. Info: %s" % (domain_name, response)
 
     else:
-        return 0, "Proxy-host " + domain_name + " already deleted."
+        return 0, "Proxy-host %s already deleted." % domain_name
 
+
+# Search Certificate, exists or not
 def search_certificate(module, api_url, token, domain_name=None, item_id=None):
     response, info = http_request(api_url, token, action="search-ssl")
-    
+
     status_code = info
     if status_code >= 400:
-        module.fail_json("Failed to search for certificate. Info: %s" % response)
+        module.fail_json(msg="Failed to search for certificate. Info: %s" % response)
 
-    result_search = ""
+    result_search = None
     if domain_name is not None:
         for search in json.loads(response.text):
             if domain_name in search["domain_names"]:
                 result_search = search
-        
+
     elif item_id is not None:
         for search in json.loads(response.text):
             if item_id == search["id"]:
@@ -229,17 +287,19 @@ def search_certificate(module, api_url, token, domain_name=None, item_id=None):
     # Return certificate
     return result_search
 
+
+# Delete Certificate
 def delete_certificate(module, api_url, token, item_id):
-    
+
     certificate = search_certificate(module, api_url, token, item_id=item_id)
 
-    if len(certificate) > 0:
+    if certificate:
         # If the certificate already exists, do remove
         response, info = http_request(api_url, token, item_id=item_id, action="delete-ssl")
-        
+
         status_code = info
         if status_code == 200:
-            result = "Certificate id: %s remowed" % item_id
+            result = "Certificate id: %s removed" % item_id
             return 1, result
 
         elif status_code >= 400:
@@ -250,6 +310,8 @@ def delete_certificate(module, api_url, token, item_id):
         result = "Certificate id: %s does not exist." % item_id
         return 0, result
 
+
+# Main function
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -259,6 +321,7 @@ def main():
             host=dict(type='str', required=True),
             host_port=dict(type='int', required=False, default=80),
             ssl_forced=dict(type='bool', required=False, default=True),
+            letsencrypt_email=dict(type='str', required=False, default='', no_log=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
     )
@@ -269,10 +332,14 @@ def main():
     forward_host = module.params['host']
     forward_port = module.params['host_port']
     ssl_forced = module.params['ssl_forced']
+    letsencrypt_email = module.params['letsencrypt_email']
     state = module.params['state']
 
     if state == 'present':
-        (rc, result) = create_proxy_host(module, api_url, token, domain_name, forward_host, forward_port, ssl_forced)
+        (rc, result) = create_proxy_host(
+            module, api_url, token, domain_name,
+            forward_host, forward_port, ssl_forced, letsencrypt_email
+        )
     elif state == 'absent':
         (rc, result) = delete_proxy_host(module, api_url, token, domain_name)
 
@@ -282,6 +349,7 @@ def main():
         module.exit_json(msg=result, changed=True)
     else:
         module.exit_json(msg=result, changed=False)
+
 
 if __name__ == '__main__':
     main()

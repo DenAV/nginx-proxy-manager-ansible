@@ -1,0 +1,57 @@
+# Azure Container Instances — NPM deployment
+# Docs: https://github.com/DenAV/nginx-proxy-manager-ansible/wiki/Deployment-Guide
+#
+# Usage:
+#   az container create --resource-group <rg> --file npm-aci.yaml
+#
+# Before deploying, replace placeholders:
+#   <storage-account>  — Azure Storage Account name
+#   <storage-key>      — Azure Storage Account key
+
+apiVersion: '2021-10-01'
+name: npm
+location: westeurope
+properties:
+  containers:
+    - name: npm-app
+      properties:
+        image: 'jc21/nginx-proxy-manager:2.11.3'
+        resources:
+          requests:
+            cpu: 1.0
+            memoryInGb: 2.0
+        ports:
+          - protocol: TCP
+            port: 80
+          - protocol: TCP
+            port: 443
+          - protocol: TCP
+            port: 81
+        volumeMounts:
+          - name: npm-data
+            mountPath: /data
+          - name: npm-letsencrypt
+            mountPath: /etc/letsencrypt
+  osType: Linux
+  restartPolicy: Always
+  ipAddress:
+    type: Public
+    dnsNameLabel: npm-instance
+    ports:
+      - protocol: TCP
+        port: 80
+      - protocol: TCP
+        port: 443
+      - protocol: TCP
+        port: 81
+  volumes:
+    - name: npm-data
+      azureFile:
+        shareName: npm-data
+        storageAccountName: '<storage-account>'
+        storageAccountKey: '<storage-key>'
+    - name: npm-letsencrypt
+      azureFile:
+        shareName: npm-letsencrypt
+        storageAccountName: '<storage-account>'
+        storageAccountKey: '<storage-key>'

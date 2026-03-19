@@ -1,8 +1,18 @@
 ---
 # defaults file for npm-management
 
-npm_api_create_host: False
-npm_api_ssl_forced: False
+# API connection
+npm_api_url: "http://localhost:81/api"
+npm_api_check_url: "{{ npm_api_url }}"
 
+# Single host management
+npm_api_state: present
+npm_api_ssl_forced: false
+npm_api_letsencrypt_email: ""
 npm_api_domain_name: ""
 npm_api_host: ""
+npm_api_host_port: 80
+
+# Batch operations — list of proxy hosts to manage
+# Each item: { domain_name, host, host_port (optional), ssl_forced (optional), state (optional) }
+npm_api_hosts: []

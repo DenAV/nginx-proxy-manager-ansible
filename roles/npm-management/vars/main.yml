@@ -1,4 +1,4 @@
 ---
-# vars file for npm-managenment
-npm_api_url: http://192.168.1.5:81/api
-npm_api_check_url: "{{npm_api_url}}"
+# vars file for npm-management
+# NOTE: npm_api_url and npm_api_check_url are now in defaults/main.yml
+# Override via inventory, group_vars, host_vars, or --extra-vars

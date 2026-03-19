@@ -1,10 +1,9 @@
-#Version 2.10.3 
-# LE_MAIL variable for letsencrypt_email
+# Nginx Proxy Manager — Docker Compose
+# Docs: https://github.com/DenAV/nginx-proxy-manager-ansible/tree/main/docker
 
-version: '3.8'
 services:
   app:
-    image: 'jc21/nginx-proxy-manager:2.10.3'
+    image: 'jc21/nginx-proxy-manager:${IMAGE_TAG:-2.11.3}'
     container_name: npm-app
     hostname: npm
     ports:
@@ -12,13 +11,31 @@ services:
       - '81:81'
       - '443:443'
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
-      - ${PWD}/internal/certificate.js:/app/internal/certificate.js
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "/bin/check-health"]
       interval: 10s
       timeout: 3s
-    environment:
-      LE_MAIL: "npm-admin@example.com"
+    networks:
+      - npm
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  npm:
+    name: npm
+    driver: bridge
+
+volumes:
+  npm-data:
+  npm-letsencrypt:
