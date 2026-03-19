@@ -73,7 +73,7 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [x] Remove `certificate.js` override and `${PWD}/internal/` volume mount (see below)
   - [x] Remove `LE_MAIL` environment variable from docker-compose
 
-- [x] **Swagger UI service in docker-compose** — [#21](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/21) (CLOSED, PR #38)
+- [ ] **Swagger UI service in docker-compose** — [#21](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/21) (PR #38)
   - [x] Add `swagger-ui` service to `docker/docker-compose_npm.yml`
   - [ ] Verify Swagger UI loads the NPM schema successfully (needs live test)
   - [x] Update wiki API Reference page

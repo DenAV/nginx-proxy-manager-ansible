@@ -30,3 +30,41 @@
           - proxy_hosts.json | selectattr('domain_names', 'contains', 'molecule-test.example.com') | list | length > 0
         fail_msg: "Proxy host 'molecule-test.example.com' was not found in NPM"
         success_msg: "Proxy host 'molecule-test.example.com' verified successfully"
+
+- name: Verify Swagger UI loads NPM schema
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Check NPM API schema endpoint
+      uri:
+        url: "http://127.0.0.1:3081/api/schema"
+        method: GET
+        status_code: 200
+        return_content: true
+      register: schema_result
+
+    - name: Assert NPM schema returns API specification
+      assert:
+        that:
+          - schema_result.status == 200
+          - schema_result.content | length > 0
+        fail_msg: "NPM /api/schema did not return valid data"
+        success_msg: "NPM /api/schema returns valid API specification"
+
+    - name: Wait for Swagger UI to respond
+      uri:
+        url: "http://127.0.0.1:8080"
+        method: GET
+        status_code: 200
+        return_content: true
+      register: swagger_result
+      retries: 10
+      delay: 3
+      until: swagger_result.status == 200
+
+    - name: Assert Swagger UI serves correctly
+      assert:
+        that:
+          - "'swagger' in (swagger_result.content | lower)"
+        fail_msg: "Swagger UI did not return expected HTML content"
+        success_msg: "Swagger UI is serving correctly"
