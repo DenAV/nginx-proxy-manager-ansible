@@ -60,3 +60,11 @@ Password: changeme
 ```
 
 Immediately after logging in with this default user you will be asked to modify your details and change your password.
+
+5. Swagger UI (API docs)
+
+The compose file includes a Swagger UI service that loads the NPM API schema automatically:
+
+- [http://127.0.0.1:8080](http://127.0.0.1:8080) — interactive API explorer
+
+> **Note:** Swagger UI fetches the schema from NPM internally via the Docker network (`http://app:81/api/schema`). If you access the "Try it out" feature from your browser, requests go to `http://app:81` which is only reachable inside Docker. To execute API calls from Swagger UI, change `API_URL` in the compose file to `http://127.0.0.1:81/api/schema` (or your server's external address).
