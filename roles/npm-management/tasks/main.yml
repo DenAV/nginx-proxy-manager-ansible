@@ -75,7 +75,27 @@
     - npm_api_hosts | length == 0
 
 # --- Batch operations (loop over npm_api_hosts list) ---
-- name: NPM | Manage Proxy-Hosts (batch)
+- name: NPM | Manage Proxy-Hosts — without SSL (batch)
+  npm_proxy:
+    url: "{{ npm_api_url }}"
+    token: "{{ npm_access_token.json.token }}"
+    domain: "{{ item.domain_name }}"
+    host: "{{ item.host }}"
+    host_port: "{{ item.host_port | default(80) }}"
+    state: "{{ item.state | default(npm_api_state) }}"
+    ssl_forced: false
+    letsencrypt_email: ""
+  delegate_to: localhost
+  no_log: true
+  loop: "{{ npm_api_hosts }}"
+  loop_control:
+    label: "{{ item.domain_name }} ({{ item.state | default(npm_api_state) }})"
+  when:
+    - npm_access_token
+    - npm_api_hosts | length > 0
+    - not (item.ssl_forced | default(npm_api_ssl_forced) | bool)
+
+- name: NPM | Manage Proxy-Hosts — with SSL (batch, sequential)
   npm_proxy:
     url: "{{ npm_api_url }}"
     token: "{{ npm_access_token.json.token }}"
@@ -94,4 +114,5 @@
   when:
     - npm_access_token
     - npm_api_hosts | length > 0
+    - item.ssl_forced | default(npm_api_ssl_forced) | bool
 
