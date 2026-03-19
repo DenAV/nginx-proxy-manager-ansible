@@ -125,7 +125,7 @@ def build_url(api_url, action, item_id=None):
 
 
 # Execution of the HTTP request
-def http_request(api_url, token, action, data=None, item_id=None):
+def http_request(api_url, token, action, data=None, item_id=None, timeout=30):
 
     if item_id is None:
         url, method = build_url(api_url, action)
@@ -138,18 +138,18 @@ def http_request(api_url, token, action, data=None, item_id=None):
 
     try:
         if method == "GET":
-            response = requests.get(url=url, data=data, headers=headers, timeout=10)
+            response = requests.get(url=url, data=data, headers=headers, timeout=timeout)
         elif method == "POST":
-            response = requests.post(url=url, data=data, headers=headers, timeout=10)
+            response = requests.post(url=url, data=data, headers=headers, timeout=timeout)
         elif method == "DELETE":
-            response = requests.delete(url=url, data=data, headers=headers, timeout=10)
+            response = requests.delete(url=url, data=data, headers=headers, timeout=timeout)
     except requests.exceptions.ConnectionError as e:
         raise requests.exceptions.ConnectionError(
             "Failed to connect to %s: %s" % (url, e)
         )
     except requests.exceptions.Timeout as e:
         raise requests.exceptions.Timeout(
-            "Request to %s timed out: %s" % (url, e)
+            "Request to %s timed out after %ds: %s" % (url, timeout, e)
         )
 
     return response, response.status_code
@@ -211,14 +211,23 @@ def create_proxy_host(module, api_url, token, domain_name,
                 "forward_scheme": forward_scheme,
             })
 
-        response, info = http_request(api_url, token, data=data_request, action="create-host")
+        response, info = http_request(
+            api_url, token, data=data_request,
+            action="create-host",
+            timeout=120 if ssl_forced else 30
+        )
 
         status_code = info
         if status_code == 201:
             return 1, "Proxy-host %s created" % domain_name
 
         elif status_code >= 400:
-            return 2, "Failed to connect to api host to create for proxy_host. Info: %s" % response
+            try:
+                error_detail = response.json()
+            except Exception:
+                error_detail = response.text
+            return 2, "Failed to create proxy_host %s (HTTP %d): %s" % (
+                domain_name, status_code, error_detail)
 
 
 # Delete Proxy-host

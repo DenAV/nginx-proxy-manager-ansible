@@ -202,7 +202,7 @@ ansible-playbook pl_npm-management.yml --ask-vault-pass
 ansible-playbook pl_npm-management.yml --vault-password-file .vault-pass
 ```
 
-- An example (unencrypted) template is provided at `roles/npm-management/vars/api_secret.yml.example`.
+- An example (unencrypted) template is provided at `roles/npm-management/vars/api_secret.example`.
 
 ## API Reference (Swagger)
 

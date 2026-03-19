@@ -144,7 +144,7 @@ class TestHttpRequest:
 
     @patch("npm_proxy.requests.get")
     def test_timeout_is_set(self, mock_get):
-        """Verify timeout=10 is passed to requests calls."""
+        """Verify default timeout=30 is passed to requests calls."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_get.return_value = mock_response
@@ -154,7 +154,22 @@ class TestHttpRequest:
         )
         call_kwargs = mock_get.call_args
         timeout = call_kwargs.kwargs.get("timeout") or call_kwargs[1].get("timeout")
-        assert timeout == 10
+        assert timeout == 30
+
+    @patch("npm_proxy.requests.post")
+    def test_timeout_ssl_is_120(self, mock_post):
+        """Verify timeout=120 can be passed for SSL operations."""
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_post.return_value = mock_response
+
+        npm_proxy.http_request(
+            "http://localhost:81/api", "token", action="create-host",
+            data="{}", timeout=120
+        )
+        call_kwargs = mock_post.call_args
+        timeout = call_kwargs.kwargs.get("timeout") or call_kwargs[1].get("timeout")
+        assert timeout == 120
 
     @patch("npm_proxy.requests.get")
     def test_connection_error_is_raised(self, mock_get):
