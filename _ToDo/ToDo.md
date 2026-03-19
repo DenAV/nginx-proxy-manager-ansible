@@ -97,7 +97,7 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
   - [x] Add code coverage with Codecov (pytest-cov, CI upload, badge)
   - [ ] Add Molecule tests for the role (removed from CI — NPM container too heavy for GitHub Actions)
   - [x] Unit tests for `npm_proxy.py` — 24 tests passing, 59% coverage
-  - [ ] Add pre-commit hooks (ansible-lint, flake8, trailing whitespace)
+  - [x] Add pre-commit hooks (ansible-lint, flake8, trailing whitespace)
 
 - [ ] **GitOps** — [#11](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/11)
   - [ ] Declarative state: `proxy_hosts.yml` file with a list of hosts, role converges to it
@@ -119,10 +119,10 @@ feature/fix-xxx  →  develop  →  main  →  release (tag vX.Y.Z)
 - [ ] **Packaging & structure** — [#13](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/13)
   - [ ] Convert to Ansible Collection
   - [ ] Replace `requests` with `fetch_url` (native Ansible, no external dependencies)
-  - [ ] Add `Makefile` with `lint`, `test`, `deploy` targets
-  - [ ] Add `.editorconfig`, `CHANGELOG.md`, `CONTRIBUTING.md`
-  - [ ] Add GitHub Issues/PR templates (`.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md`)
-  - [ ] Add `CODEOWNERS`
+  - [x] Add `Makefile` with `lint`, `test`, `deploy` targets
+  - [x] Add `.editorconfig`, `CHANGELOG.md`, `CONTRIBUTING.md`
+  - [x] Add GitHub Issues/PR templates (`.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md`)
+  - [x] Add `CODEOWNERS`
   - [ ] Add Dependabot / Renovate for Docker image tags
 
 - [x] **`.gitignore`** — [#14](https://github.com/DenAV/nginx-proxy-manager-ansible/issues/14) (CLOSED, PR #29)
