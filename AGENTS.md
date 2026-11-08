@@ -7,6 +7,7 @@
 
 ## Git workflow
 
+- Track every repository change in a GitHub issue before implementation; use the issue number in the working branch and link it in the PR. The local TODO does not replace public issue tracking.
 - This is a multi-branch project: `feature/*` or `fix/*` -> `develop` -> `main`. Base implementation branches on `develop` and target PRs to `develop`; promote reviewed changes from `develop` to `main`. Do not implement directly on `main`.
 - Obtain approval before creating branches, committing, pushing, opening PRs, or merging. Do not switch branches while existing changes could be lost or carried into the wrong branch; preserve the current work and resolve the branch choice first.
 
@@ -29,7 +30,8 @@ python -m pytest tests/test_npm_proxy.py::TestCreateProxyHost::test_create_new_h
 python -m pytest tests/ --cov=library --cov-report=term
 ```
 
-- Unit tests insert `library/` into `sys.path` and mock Ansible internals and HTTP calls. They need no running NPM, but do not prove real Ansible argument handling or role execution.
+- `tests/test_npm_proxy.py` inserts `library/` into `sys.path` and mocks Ansible internals and HTTP calls; it does not prove real Ansible argument handling or role execution.
+- `tests/test_role_vars.py` runs only the role's initial variable-loading and credential-validation tasks in isolated temporary roles, including an encrypted Vault fixture. It needs `ansible-playbook`/`ansible-vault`, skips if the playbook executable is unavailable, and never runs the NPM API tasks.
 - `make pre-commit` needs `pre-commit` installed separately; it is not in `requirements-dev.txt`. Its Ansible hook excludes `molecule/`, `docker/`, `deploy/`, and `docs/`, unlike CI's `ansible-lint .`.
 - `.flake8` permits imports after Ansible documentation blocks (`E402`) in `library/*.py`; preserve this layout.
 - `.github/workflows/ci.yml` is the executable CI source: lint, syntax, unit tests; pushes to `main`/`develop`, PRs to `develop` only. There is no integration workflow despite README/wiki claims.
@@ -40,5 +42,5 @@ python -m pytest tests/ --cov=library --cov-report=term
 - Do not run the example playbook as verification: it creates an SSL host and may request a real Let's Encrypt certificate. Use `--syntax-check` for static validation.
 - Current `state: present` is create-only: existing domains are returned unchanged even when backend/SSL settings differ. Current `state: absent` deletes the entire matching multi-domain host and deletes its certificate first, without checking other users of that certificate. Do not exercise deletion against shared/live data.
 - The module does not yet advertise Ansible check-mode support; do not describe `--check` as a working preview.
-- Credentials normally come from the ignored `roles/npm-management/vars/api_secret.yml` (Vault). The role currently scans the whole vars directory without excluding `api_secret.example`; renaming the example alone did not fix loading.
+- Credentials can come from inventory or the ignored `roles/npm-management/vars/api_secret.yml` (Vault). Keep `api_secret.example` explicitly excluded from `include_vars`; renaming it alone does not prevent unknown-extension failures.
 - Inspect transport before live API work: token acquisition currently disables TLS certificate validation. Treat this as a known defect, not a pattern to copy.

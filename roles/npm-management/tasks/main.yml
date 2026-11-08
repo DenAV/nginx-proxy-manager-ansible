@@ -1,8 +1,10 @@
 ---
 # tasks file for npm-management
-- name: "Include OS-specific variables"
+- name: "Load NPM role variables"
   include_vars:
     dir: vars
+    ignore_files:
+      - api_secret.example
   no_log: True
 
 # --- Validate required secrets early
@@ -115,4 +117,3 @@
     - npm_access_token
     - npm_api_hosts | length > 0
     - item.ssl_forced | default(npm_api_ssl_forced) | bool
-
