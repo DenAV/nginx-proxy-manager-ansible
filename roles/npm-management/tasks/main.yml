@@ -1,15 +1,15 @@
 ---
 # tasks file for npm-management
 - name: "Load NPM role variables"
-  include_vars:
+  ansible.builtin.include_vars:
     dir: vars
     ignore_files:
       - api_secret.example
-  no_log: True
+  no_log: true
 
 # --- Validate required secrets early
 - name: Validate NPM API credentials
-  assert:
+  ansible.builtin.assert:
     that:
       - npm_user is defined
       - npm_user | length > 0
@@ -19,14 +19,14 @@
       NPM API credentials (npm_user/npm_password) are missing or empty.
       Set them in roles/npm-management/vars/api_secret.yml and encrypt with Ansible Vault.
     success_msg: NPM API credentials present.
-  no_log: True
+  no_log: true
 
 # --- API Health-Check
 - name: NPM | API Health-Check
-  uri:
+  ansible.builtin.uri:
     url: "{{ npm_api_check_url }}"
     timeout: 10
-    return_content: yes
+    return_content: true
     status_code: [200, 401]
   register: npm_api_check_result
   retries: 6
@@ -40,10 +40,10 @@
 
 # --- Get Access Token ---
 - name: NPM Post | Get Access Token
-  uri:
+  ansible.builtin.uri:
     url: '{{ npm_api_url }}/tokens'
     method: POST
-    validate_certs: no
+    validate_certs: false
     status_code: 200
     body_format: json
     body:

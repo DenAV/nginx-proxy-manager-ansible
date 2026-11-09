@@ -29,6 +29,8 @@ jobs:
 
       - name: Run ansible-lint
         run: ansible-lint .
+        env:
+          ANSIBLE_LIBRARY: ./library
 
       - name: Run flake8
         run: flake8 library/
