@@ -7,7 +7,7 @@ install: ## Install dev dependencies
 	pip install -r requirements-dev.txt
 
 lint: ## Run ansible-lint and flake8
-	ansible-lint .
+	ANSIBLE_LIBRARY=./library ansible-lint .
 	flake8 library/
 
 test: ## Run unit tests

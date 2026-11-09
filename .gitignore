@@ -4,9 +4,8 @@
 
 # --- Project-specific ---
 
-# ToDo (allow only tracking file)
-_ToDo/*
-!_ToDo/ToDo.md
+# Local review notes and backlog
+/_ToDo/
 
 # Ansible
 hosts*

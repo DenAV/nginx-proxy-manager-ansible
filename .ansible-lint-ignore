@@ -1,0 +1,4 @@
+# The cloud-init header must start at the first byte of the file.
+deploy/hetzner/cloud-config.yml yaml[comments]
+# Preserve the established public role name for backwards compatibility.
+roles/npm-management role-name

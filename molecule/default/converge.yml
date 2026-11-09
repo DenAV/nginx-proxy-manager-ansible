@@ -5,7 +5,7 @@
   gather_facts: false
   tasks:
     - name: Wait for NPM API to respond
-      uri:
+      ansible.builtin.uri:
         url: "{{ npm_api_url }}"
         method: GET
         status_code: [200, 401]
