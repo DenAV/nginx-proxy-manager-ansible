@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Document the branching, verification, and release process (#11).
+
 ### Fixed
 
 - Use boolean token-availability conditions compatible with recent Ansible releases (#47).
+- Run CI for pull requests to `main` and quote the Ansible dependency constraint (#11).
 - Exclude `api_secret.example` when loading role variables, preserving inventory and Vault credentials (#45).
 
 ## [1.2.0] - 2026-03-20

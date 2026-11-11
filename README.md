@@ -12,9 +12,11 @@ Ansible role and custom module for managing [Nginx Proxy Manager](https://nginxp
 - Automatic SSL certificate provisioning (Let's Encrypt)
 - Ansible Vault integration for secure credential storage
 - Cloud deployment manifests (Hetzner Cloud, Azure ACI)
-- CI/CD with GitHub Actions (lint, unit tests, Molecule integration tests)
+- CI with GitHub Actions (lint, syntax checks, and unit tests)
 
 **Full documentation:** [Wiki](https://github.com/DenAV/nginx-proxy-manager-ansible/wiki)
+
+Maintainers: see the [release process](docs/RELEASING.md).
 
 ## Requirements
 
@@ -37,14 +39,14 @@ nginx-proxy-manager-ansible/
 ├── docker/
 │   └── docker-compose_npm.yml # Docker Compose for NPM
 ├── docs/
-│   └── swagger.yaml           # NPM REST API spec (OpenAPI 3.1)
+│   ├── RELEASING.md           # Release process
+│   └── swagger.yaml            # NPM REST API spec (OpenAPI 3.1)
 ├── tests/
 │   └── test_npm_proxy.py      # Unit tests (pytest)
 ├── molecule/
 │   └── default/               # Molecule integration tests
 ├── .github/workflows/
-│   ├── ci.yml                 # CI: lint + syntax + unit tests
-│   └── integration.yml        # Integration: Molecule + Docker
+│   └── ci.yml                 # CI: lint + syntax + unit tests
 ├── pl_npm-management.yml      # Main playbook
 └── requirements-dev.txt       # Dev dependencies
 ```
