@@ -5,7 +5,7 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [develop]
+    branches: [main, develop]
 
 jobs:
   lint:
@@ -50,7 +50,7 @@ jobs:
           cache-dependency-path: requirements-dev.txt
 
       - name: Install Ansible
-        run: pip install ansible-core>=2.14
+        run: pip install 'ansible-core>=2.14'
 
       - name: Syntax check
         run: ansible-playbook pl_npm-management.yml --syntax-check
