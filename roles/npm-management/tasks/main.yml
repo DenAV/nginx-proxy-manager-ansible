@@ -57,6 +57,14 @@
   when:
     - npm_api_check_result.status == 200
 
+- name: Validate NPM access token
+  ansible.builtin.fail:
+    msg: NPM authentication did not return a valid access token.
+  when: >-
+    npm_access_token.json.token is not defined or
+    npm_access_token.json.token is not string or
+    npm_access_token.json.token | length == 0
+
 # --- Single host operation (backward-compatible) ---
 - name: NPM | Manage Proxy-Host (single)
   npm_proxy:
@@ -72,7 +80,8 @@
   throttle: 1
   no_log: true
   when:
-    - npm_access_token
+    - npm_access_token.json.token is defined
+    - npm_access_token.json.token | length > 0
     - npm_api_domain_name | default('') | length > 0
     - npm_api_hosts | length == 0
 
@@ -93,7 +102,8 @@
   loop_control:
     label: "{{ item.domain_name }} ({{ item.state | default(npm_api_state) }})"
   when:
-    - npm_access_token
+    - npm_access_token.json.token is defined
+    - npm_access_token.json.token | length > 0
     - npm_api_hosts | length > 0
     - not (item.ssl_forced | default(npm_api_ssl_forced) | bool)
 
@@ -114,6 +124,7 @@
   loop_control:
     label: "{{ item.domain_name }} ({{ item.state | default(npm_api_state) }})"
   when:
-    - npm_access_token
+    - npm_access_token.json.token is defined
+    - npm_access_token.json.token | length > 0
     - npm_api_hosts | length > 0
     - item.ssl_forced | default(npm_api_ssl_forced) | bool
